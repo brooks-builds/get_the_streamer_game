@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 ggez = "0.5.1"
+twitch_chat_wrapper = { path="../twitch_chat_wrapper" }

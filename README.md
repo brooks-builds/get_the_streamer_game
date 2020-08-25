@@ -2,7 +2,7 @@ get_the_streamer_game
 
 # Todo
 
-- [ ] Integrate twitchchat wrapper crate
+- [x] Integrate twitchchat wrapper crate
 - [ ] Interface
   - [ ] Partition off instruction area
   - [ ] Title
