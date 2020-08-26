@@ -5,8 +5,9 @@ get_the_streamer_game
 - [x] Integrate twitchchat wrapper crate
 - [ ] Interface
   - [x] Title
-  - [ ] Partition off instruction area
-  - [ ] Show flame command + flame graphic
+  - [x] Partition off instruction area
+  - [x] Show flame command
+  - [ ] Show flame graphic
   - [ ] Partition off drop zones
   - [ ] Label each drop zone (a - z)
 - [ ] Implement flame on flame command

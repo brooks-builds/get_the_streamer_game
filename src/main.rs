@@ -21,7 +21,7 @@ fn main() {
                 Err(error) => panic!(error),
             };
 
-        let game_state = &mut GameState::new(send_to_twitch, receive_from_twitch);
+        let game_state = &mut GameState::new(send_to_twitch, receive_from_twitch, context).unwrap();
         match event::run(context, event_loop, game_state) {
             Ok(_) => println!("Thanks for playing!"),
             Err(error) => println!("Error occurred: {}", error),
