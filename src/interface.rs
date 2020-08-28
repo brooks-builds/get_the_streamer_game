@@ -10,6 +10,7 @@ pub struct Interface {
     commands: Vec<Text>,
     command_height: usize,
     command_start_at: f32,
+    pub location: Rect,
 }
 
 impl Interface {
@@ -23,27 +24,22 @@ impl Interface {
         let (title_width, title_height) = title.dimensions(context);
         let margin = 10.0;
         let instruction_width = title_width as f32 + margin * 2.0;
+        let location = Rect::new(
+            screen_width - instruction_width,
+            0.0,
+            instruction_width,
+            screen_height,
+        );
 
         let instruction_background = MeshBuilder::new()
             .rectangle(
                 DrawMode::fill(),
-                Rect::new(
-                    screen_width - instruction_width,
-                    0.0,
-                    instruction_width,
-                    screen_height,
-                ),
+                location,
                 Color::from_rgb(0x08, 0x20, 0x4e),
             )
             .build(context)?;
 
-        let commands = vec![Text::new("#fire-<column>"), Text::new("#flower-<column>")]
-            .into_iter()
-            .map(|mut text| {
-                text.set_font(Font::default(), Scale::uniform(35.0));
-                text
-            })
-            .collect();
+        let commands = vec![];
         let command_height = 150;
         let command_start_at = title_height as f32 + margin * 4.0;
 
@@ -55,6 +51,7 @@ impl Interface {
             commands,
             command_height,
             command_start_at,
+            location,
         })
     }
     pub fn draw(&self, context: &mut Context, screen_size: (f32, f32)) -> GameResult<()> {

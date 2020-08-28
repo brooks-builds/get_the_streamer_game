@@ -7,7 +7,8 @@ get_the_streamer_game
   - [x] Title
   - [x] Partition off instruction area
   - [x] Show flame command
-  - [ ] Show flame graphic
+  - [x] Show flame graphic
+  - [ ] Refactor the instructions to take in game objects to display
   - [ ] Partition off drop zones
   - [ ] Label each drop zone (a - z)
 - [ ] Implement flame on flame command

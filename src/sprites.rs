@@ -1,4 +1,5 @@
 use ggez::graphics::{DrawParam, Image, Rect};
+use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
 use std::time::Duration;
 
@@ -8,6 +9,8 @@ pub struct Sprite {
     rect_index: usize,
     next_time_to_change: Duration,
     index_change_duration: Duration,
+    pub width: f32,
+    pub height: f32,
 }
 
 impl Sprite {
@@ -47,14 +50,18 @@ impl Sprite {
             rect_index,
             next_time_to_change,
             index_change_duration,
+            width: single_sprite_width as f32,
+            height: single_sprite_height as f32,
         })
     }
 
-    pub fn draw(&mut self, context: &mut Context) -> GameResult<()> {
+    pub fn draw(&self, context: &mut Context, location: Point2<f32>) -> GameResult<()> {
         graphics::draw(
             context,
             &self.image,
-            DrawParam::new().src(self.individual_sprite_rects[self.rect_index]),
+            DrawParam::new()
+                .src(self.individual_sprite_rects[self.rect_index])
+                .dest(location),
         )
     }
     pub fn update(&mut self, time_since_start: std::time::Duration) {

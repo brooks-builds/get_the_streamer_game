@@ -1,3 +1,5 @@
+mod draw_system;
+mod game_object;
 mod interface;
 mod sprites;
 
@@ -9,12 +11,15 @@ use sprites::Sprite;
 use std::sync::mpsc::{Receiver, Sender};
 use twitch_chat_wrapper::chat_message::ChatMessage;
 
+use draw_system::DrawSystem;
+use game_object::GameObject;
+
 pub struct GameState {
     send_to_chat: Sender<String>,
     receive_from_chat: Receiver<ChatMessage>,
     interface: Interface,
-    fire_sprite: Sprite,
     framerate_target: u32,
+    game_objects: Vec<GameObject>,
 }
 
 impl GameState {
@@ -28,12 +33,25 @@ impl GameState {
         let fire_sprite = Sprite::new(context, "/LargeFlame.png", 4, 1)?;
         let framerate_target = 60;
 
+        // create flame instruction
+        let flame_draw_system = DrawSystem::new(Some(fire_sprite), Some("#fire-<column>"));
+        let flame_size = flame_draw_system.get_size().unwrap_or((50.0, 50.0));
+        let flame_game_object = GameObject::new(
+            interface.location.x + interface.location.w / 2.0 - flame_size.0 / 2.0,
+            150.0,
+            Some(flame_draw_system),
+            flame_size.0,
+            flame_size.1,
+        );
+
+        let game_objects = vec![flame_game_object];
+
         Ok(GameState {
             send_to_chat,
             receive_from_chat,
             interface,
-            fire_sprite,
             framerate_target,
+            game_objects,
         })
     }
 }
@@ -45,7 +63,9 @@ impl EventHandler for GameState {
                 dbg!(chat_message);
             }
 
-            self.fire_sprite.update(timer::time_since_start(context));
+            self.game_objects
+                .iter_mut()
+                .for_each(|game_object| game_object.update(timer::time_since_start(context)));
         }
         Ok(())
     }
@@ -56,7 +76,9 @@ impl EventHandler for GameState {
         let screen_size = graphics::drawable_size(context);
         self.interface.draw(context, screen_size)?;
 
-        self.fire_sprite.draw(context)?;
+        for game_object in self.game_objects.iter() {
+            game_object.draw(context)?;
+        }
 
         graphics::present(context)
     }
