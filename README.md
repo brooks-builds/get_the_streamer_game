@@ -11,7 +11,7 @@ get_the_streamer_game
   - [x] Partition off drop zones
   - [x] Label each drop zone (a - z)
 - [ ] Implement flame on flame command
-  - [ ] when receiving `#flame-a` spawn a flame entity at position a
+  - [ ] when receiving `#flame-1` spawn a flame entity at position 1
   - [ ] Have flame enitity drop
   - [ ] Have flame entity stop when it hits the ground
   - [ ] Have flame entity dissapear after 5 seconds

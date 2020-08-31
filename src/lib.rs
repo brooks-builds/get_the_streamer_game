@@ -1,3 +1,4 @@
+mod command;
 mod draw_system;
 mod game_object;
 mod interface;
