@@ -2,6 +2,9 @@ use ggez::graphics::{Color, DrawMode, DrawParam, Font, Mesh, MeshBuilder, Rect, 
 use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
 
+const DROP_ZONE_COUNT: u8 = 10;
+const DROP_ZONE_HEIGHT: f32 = 50.0;
+
 pub struct Interface {
     title: Text,
     instruction_background: Mesh,
@@ -11,6 +14,10 @@ pub struct Interface {
     command_height: usize,
     command_start_at: f32,
     pub location: Rect,
+    drop_zones: Vec<Rect>,
+    drop_zone_background: Mesh,
+    drop_zone_labels: Vec<Text>,
+    single_drop_zone_width: f32,
 }
 
 impl Interface {
@@ -43,6 +50,34 @@ impl Interface {
         let command_height = 150;
         let command_start_at = title_height as f32 + margin * 4.0;
 
+        let mut drop_zones = vec![];
+        let drop_zone_width = screen_width - instruction_width;
+        let single_drop_zone_width = drop_zone_width / DROP_ZONE_COUNT as f32;
+        let mut drop_zone_labels = vec![];
+
+        for count in 0..DROP_ZONE_COUNT {
+            let drop_zone = Rect::new(
+                count as f32 * single_drop_zone_width,
+                0.0,
+                single_drop_zone_width,
+                DROP_ZONE_HEIGHT,
+            );
+            drop_zones.push(drop_zone.clone());
+
+            let mut label = Text::new(format!("{}", count));
+
+            label.set_bounds(
+                Point2::new(single_drop_zone_width, DROP_ZONE_HEIGHT),
+                graphics::Align::Center,
+            );
+            label.set_font(Font::default(), Scale::uniform(50.0));
+            drop_zone_labels.push(label);
+        }
+
+        let drop_zone_background = MeshBuilder::new()
+            .rectangle(DrawMode::stroke(1.0), drop_zones[0], graphics::WHITE)
+            .build(context)?;
+
         Ok(Interface {
             title,
             instruction_background,
@@ -52,12 +87,17 @@ impl Interface {
             command_height,
             command_start_at,
             location,
+            drop_zones,
+            drop_zone_background,
+            drop_zone_labels,
+            single_drop_zone_width,
         })
     }
     pub fn draw(&self, context: &mut Context, screen_size: (f32, f32)) -> GameResult<()> {
         self.draw_background(context)?;
         self.draw_title(context, screen_size)?;
         self.draw_commands(context, screen_size)?;
+        self.draw_drop_zones(context)?;
 
         Ok(())
     }
@@ -105,5 +145,34 @@ impl Interface {
                     )),
                 )
             })
+    }
+
+    fn draw_drop_zones(&self, context: &mut Context) -> GameResult<()> {
+        self.drop_zones
+            .iter()
+            .try_for_each(|drop_zone: &Rect| -> GameResult<()> {
+                graphics::draw(
+                    context,
+                    &self.drop_zone_background,
+                    DrawParam::new().dest(Point2::new(drop_zone.x, drop_zone.y)),
+                )?;
+                Ok(())
+            })?;
+
+        self.drop_zone_labels.iter().enumerate().try_for_each(
+            |(index, label)| -> GameResult<()> {
+                let label_height = label.height(context) as f32;
+                graphics::draw(
+                    context,
+                    label,
+                    DrawParam::new().dest(Point2::new(
+                        index as f32 * self.single_drop_zone_width,
+                        DROP_ZONE_HEIGHT / 2.0 - label_height / 2.0,
+                    )),
+                )
+            },
+        )?;
+
+        Ok(())
     }
 }

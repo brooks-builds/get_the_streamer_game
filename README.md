@@ -3,14 +3,13 @@ get_the_streamer_game
 # Todo
 
 - [x] Integrate twitchchat wrapper crate
-- [ ] Interface
+- [x] Interface
   - [x] Title
   - [x] Partition off instruction area
   - [x] Show flame command
   - [x] Show flame graphic
-  - [ ] Refactor the instructions to take in game objects to display
-  - [ ] Partition off drop zones
-  - [ ] Label each drop zone (a - z)
+  - [x] Partition off drop zones
+  - [x] Label each drop zone (a - z)
 - [ ] Implement flame on flame command
   - [ ] when receiving `#flame-a` spawn a flame entity at position a
   - [ ] Have flame enitity drop
@@ -24,3 +23,5 @@ get_the_streamer_game
 - [ ] Create a second entity that chat can spawn
 - [ ] Create a third entity that chat can spawn
 - [ ] Create a fourth entity that chat can spawn
+- [ ] Polish
+  - [ ] When quitting the app, exit all processes
