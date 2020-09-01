@@ -11,7 +11,7 @@ get_the_streamer_game
   - [x] Partition off drop zones
   - [x] Label each drop zone (a - z)
 - [ ] Implement flame on flame command
-  - [ ] when receiving `#flame-1` spawn a flame entity at position 1
+  - [x] when receiving `#flame-1` spawn a flame entity at position 1
   - [ ] Have flame enitity drop
   - [ ] Have flame entity stop when it hits the ground
   - [ ] Have flame entity dissapear after 5 seconds
@@ -25,3 +25,6 @@ get_the_streamer_game
 - [ ] Create a fourth entity that chat can spawn
 - [ ] Polish
   - [ ] When quitting the app, exit all processes
+- [ ] Clean up code
+  - [ ] Make command.rs nicer
+  - [ ] Extracting command in lib/update is not great :(

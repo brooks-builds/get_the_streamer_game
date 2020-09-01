@@ -175,4 +175,13 @@ impl Interface {
 
         Ok(())
     }
+
+    /// Take in an index like 3
+    /// which should return the middle x,y coordinates of the corresponding drop zone
+    pub fn get_column_coordinates_by_index(&self, index: u8) -> Point2<f32> {
+        Point2::new(
+            index as f32 * self.single_drop_zone_width + self.single_drop_zone_width / 2.0,
+            DROP_ZONE_HEIGHT / 2.0,
+        )
+    }
 }

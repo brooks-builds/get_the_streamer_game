@@ -4,6 +4,7 @@ mod game_object;
 mod interface;
 mod sprites;
 
+use command::Command;
 use ggez::event::EventHandler;
 use ggez::graphics::BLACK;
 use ggez::{graphics, timer, Context, GameResult};
@@ -55,13 +56,44 @@ impl GameState {
             game_objects,
         })
     }
+
+    fn handle_command(
+        &mut self,
+        command: Option<Command>,
+        context: &mut Context,
+    ) -> GameResult<()> {
+        if let Some(command) = command {
+            match command {
+                Command::Fire(column) => {
+                    let drop_zone_location = self.interface.get_column_coordinates_by_index(column);
+                    let fire_sprite = Sprite::new(context, "/LargeFlame.png", 4, 1)?;
+                    let flame_draw_system = DrawSystem::new(Some(fire_sprite), None);
+                    let flame_size = flame_draw_system.get_size().unwrap_or((50.0, 50.0));
+                    let flame_game_object = GameObject::new(
+                        drop_zone_location.x - flame_size.0 / 2.0,
+                        drop_zone_location.y - flame_size.1 / 2.0,
+                        Some(flame_draw_system),
+                        flame_size.0,
+                        flame_size.1,
+                    );
+
+                    self.game_objects.push(flame_game_object);
+                }
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl EventHandler for GameState {
     fn update(&mut self, context: &mut Context) -> GameResult {
         while timer::check_update_time(context, self.framerate_target) {
             if let Ok(chat_message) = self.receive_from_chat.try_recv() {
-                dbg!(chat_message);
+                match Command::new(&chat_message.message) {
+                    Err(error) => self.send_to_chat.send(error.to_owned()).unwrap(),
+                    Ok(command) => self.handle_command(command, context)?,
+                }
             }
 
             self.game_objects
