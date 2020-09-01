@@ -10,21 +10,24 @@ get_the_streamer_game
   - [x] Show flame graphic
   - [x] Partition off drop zones
   - [x] Label each drop zone (a - z)
-- [ ] Implement flame on flame command
+- [x] Implement flame on flame command
   - [x] when receiving `#flame-1` spawn a flame entity at position 1
-  - [ ] Have flame enitity drop
-  - [ ] Have flame entity stop when it hits the ground
-  - [ ] Have flame entity dissapear after 5 seconds
+  - [x] Have flame enitity drop
+  - [x] Have flame entity stop when it hits the ground
+  - [x] Have flame entity dissapear after 5 seconds
 - [ ] Implement player
   - [ ] create player entity + graphic
   - [ ] player can move left and right
   - [ ] player can jump
+  - [ ] player can stand on ground
 - [ ] game is over after player is hit by an entity spawned by chat
 - [ ] Create a second entity that chat can spawn
 - [ ] Create a third entity that chat can spawn
 - [ ] Create a fourth entity that chat can spawn
 - [ ] Polish
   - [ ] When quitting the app, exit all processes
+  - [ ] Scale up the fire sprite
 - [ ] Clean up code
   - [ ] Make command.rs nicer
   - [ ] Extracting command in lib/update is not great :(
+  - [ ] Not using children in game objects so remove them

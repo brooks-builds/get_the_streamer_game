@@ -6,10 +6,11 @@ use ggez::{graphics, Context, GameResult};
 pub struct DrawSystem {
     sprite: Option<Sprite>,
     label: Option<Text>,
+    scale_by: f32,
 }
 
 impl DrawSystem {
-    pub fn new(sprite: Option<Sprite>, label: Option<&'static str>) -> DrawSystem {
+    pub fn new(sprite: Option<Sprite>, label: Option<&'static str>, scale_by: f32) -> DrawSystem {
         let label = match label {
             Some(text) => {
                 let mut text = Text::new(text);
@@ -18,7 +19,11 @@ impl DrawSystem {
             }
             None => None,
         };
-        DrawSystem { sprite, label }
+        DrawSystem {
+            sprite,
+            label,
+            scale_by,
+        }
     }
 
     pub fn update(&mut self, time_since_start: std::time::Duration) {
@@ -29,7 +34,7 @@ impl DrawSystem {
 
     pub fn draw(&self, context: &mut Context, location: Point2<f32>) -> GameResult<()> {
         if let Some(sprite) = &self.sprite {
-            sprite.draw(context, location)?;
+            sprite.draw(context, location, self.scale_by)?;
         }
 
         if let Some(label) = &self.label {

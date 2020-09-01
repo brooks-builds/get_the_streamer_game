@@ -55,13 +55,19 @@ impl Sprite {
         })
     }
 
-    pub fn draw(&self, context: &mut Context, location: Point2<f32>) -> GameResult<()> {
+    pub fn draw(
+        &self,
+        context: &mut Context,
+        location: Point2<f32>,
+        scale_by: f32,
+    ) -> GameResult<()> {
         graphics::draw(
             context,
             &self.image,
             DrawParam::new()
                 .src(self.individual_sprite_rects[self.rect_index])
-                .dest(location),
+                .dest(location)
+                .scale([scale_by, scale_by]),
         )
     }
     pub fn update(&mut self, time_since_start: std::time::Duration) {
