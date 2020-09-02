@@ -16,8 +16,9 @@ get_the_streamer_game
   - [x] Have flame entity stop when it hits the ground
   - [x] Have flame entity dissapear after 5 seconds
 - [ ] Implement player
-  - [ ] create player entity + graphic
-  - [ ] player can move left and right
+  - [x] create player entity + graphic
+  - [x] player can move left and right
+  - [ ] player slows down to a halt when not holding a move key down
   - [ ] player can jump
   - [ ] player can stand on ground
 - [ ] game is over after player is hit by an entity spawned by chat
@@ -27,6 +28,8 @@ get_the_streamer_game
 - [ ] Polish
   - [ ] When quitting the app, exit all processes
   - [ ] Scale up the fire sprite
+  - [ ] Cut the player sprites so that we have left run, right run, and stand
+  - [ ] Switch player to have multiple sprites based on which direction they are moving (can mirror sprites by scale using a negative number [from #BareDoodah])
 - [ ] Clean up code
   - [ ] Make command.rs nicer
   - [ ] Extracting command in lib/update is not great :(

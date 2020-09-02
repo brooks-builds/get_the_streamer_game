@@ -2,7 +2,8 @@ mod command;
 mod draw_system;
 mod game_object;
 mod interface;
-mod physics_system;
+mod physics;
+mod player_input;
 mod sprites;
 
 use command::Command;
@@ -10,9 +11,10 @@ use draw_system::DrawSystem;
 use game_object::GameObject;
 use ggez::event::EventHandler;
 use ggez::graphics::BLACK;
-use ggez::{graphics, timer, Context, GameResult};
+use ggez::input::keyboard::KeyCode;
+use ggez::{graphics, input, timer, Context, GameResult};
 use interface::Interface;
-use physics_system::PhysicsSystem;
+use physics::{ItemPhysics, PhysicsSystem, PlayerPhysics};
 use sprites::Sprite;
 use std::sync::mpsc::{Receiver, Sender};
 use std::time::Duration;
@@ -34,10 +36,10 @@ impl GameState {
     ) -> GameResult<GameState> {
         let screen_size = graphics::drawable_size(context);
         let interface = Interface::new(context, screen_size)?;
-        let fire_sprite = Sprite::new(context, "/LargeFlame.png", 4, 1)?;
         let framerate_target = 60;
 
         // create flame instruction
+        let fire_sprite = Sprite::new(context, "/LargeFlame.png", 4, 1)?;
         let flame_draw_system = DrawSystem::new(Some(fire_sprite), Some("#fire-<column>"), 1.5);
         let flame_size = flame_draw_system.get_size().unwrap_or((50.0, 50.0));
         let flame_game_object = GameObject::new(
@@ -50,7 +52,23 @@ impl GameState {
             None,
         );
 
-        let game_objects = vec![flame_game_object];
+        // create player
+        let player_scale = 4.0;
+        let player_sprite = Sprite::new(context, "/PlayerCharacter.png", 24, 1)?;
+        let player_draw_system = DrawSystem::new(Some(player_sprite), None, player_scale);
+        let player_size = player_draw_system.get_size().unwrap_or((50.0, 50.0));
+        let player_physics_system = PlayerPhysics::new();
+        let player = GameObject::new(
+            250.0,
+            250.0,
+            Some(player_draw_system),
+            player_size.0 * player_scale,
+            player_size.1 * player_scale,
+            Some(Box::new(player_physics_system)),
+            None,
+        );
+
+        let game_objects = vec![flame_game_object, player];
 
         Ok(GameState {
             send_to_chat,
@@ -69,18 +87,19 @@ impl GameState {
         if let Some(command) = command {
             match command {
                 Command::Fire(column) => {
+                    let scale = 2.0;
                     let drop_zone_location = self.interface.get_column_coordinates_by_index(column);
                     let fire_sprite = Sprite::new(context, "/LargeFlame.png", 4, 1)?;
-                    let flame_draw_system = DrawSystem::new(Some(fire_sprite), None, 2.0);
+                    let flame_draw_system = DrawSystem::new(Some(fire_sprite), None, scale);
                     let flame_size = flame_draw_system.get_size().unwrap_or((50.0, 50.0));
-                    let physics_system = PhysicsSystem::new(true);
+                    let physics_system = ItemPhysics::new();
                     let flame_game_object = GameObject::new(
                         drop_zone_location.x - flame_size.0 / 2.0,
                         drop_zone_location.y - flame_size.1 / 2.0,
                         Some(flame_draw_system),
-                        flame_size.0,
-                        flame_size.1,
-                        Some(physics_system),
+                        flame_size.0 * scale,
+                        flame_size.1 * scale,
+                        Some(Box::new(physics_system)),
                         Some(Duration::from_secs(6)),
                     );
 
@@ -103,10 +122,10 @@ impl EventHandler for GameState {
                 }
             }
 
-            let (_screen_width, screen_height) = graphics::drawable_size(context);
+            let screen_size = graphics::drawable_size(context);
 
             self.game_objects.iter_mut().for_each(|game_object| {
-                game_object.update(timer::time_since_start(context), screen_height)
+                game_object.update(timer::time_since_start(context), screen_size, context)
             });
 
             self.game_objects
