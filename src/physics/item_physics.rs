@@ -1,4 +1,4 @@
-use super::PhysicsSystem;
+use super::{GameObject, PhysicsSystem};
 use ggez::graphics::Rect;
 use ggez::nalgebra::Point2;
 use ggez::Context;
@@ -26,6 +26,7 @@ impl PhysicsSystem for ItemPhysics {
         screen_height: (f32, f32),
         gravity_force: f32,
         context: &mut Context,
+        _collidable_game_objects: &Vec<GameObject>,
     ) {
         if self.affected_by_gravity {
             self.velocity.y += gravity_force;

@@ -7,11 +7,12 @@ use std::time::{Duration, Instant};
 const GRAVITY_FORCE: f32 = 0.3;
 
 pub struct GameObject {
-    location: Rect,
+    pub location: Rect,
     draw_system: Option<DrawSystem>,
     physics_system: Option<Box<dyn PhysicsSystem>>,
     birth_time: Instant,
     live_for: Option<Duration>,
+    pub collidable: bool,
 }
 
 impl GameObject {
@@ -23,6 +24,7 @@ impl GameObject {
         height: f32,
         physics_system: Option<Box<dyn PhysicsSystem>>,
         live_for: Option<Duration>,
+        collidable: bool,
     ) -> GameObject {
         let live_until = if let Some(live_for) = live_for {
             Some(Instant::now() + live_for)
@@ -36,6 +38,7 @@ impl GameObject {
             physics_system,
             live_for,
             birth_time: Instant::now(),
+            collidable,
         }
     }
 
@@ -44,9 +47,16 @@ impl GameObject {
         time_since_start: std::time::Duration,
         screen_size: (f32, f32),
         context: &mut Context,
+        collidable_game_objects: &Vec<GameObject>,
     ) {
         if let Some(physics_system) = &mut self.physics_system {
-            physics_system.update(&mut self.location, screen_size, GRAVITY_FORCE, context);
+            physics_system.update(
+                &mut self.location,
+                screen_size,
+                GRAVITY_FORCE,
+                context,
+                collidable_game_objects,
+            );
         }
 
         if let Some(draw_system) = &mut self.draw_system {
@@ -67,6 +77,19 @@ impl GameObject {
             self.birth_time.elapsed() < live_for
         } else {
             true
+        }
+    }
+}
+
+impl Clone for GameObject {
+    fn clone(&self) -> Self {
+        GameObject {
+            location: self.location.clone(),
+            draw_system: None,
+            physics_system: None,
+            birth_time: self.birth_time,
+            live_for: None,
+            collidable: self.collidable,
         }
     }
 }

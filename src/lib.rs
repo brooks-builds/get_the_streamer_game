@@ -40,7 +40,7 @@ impl GameState {
 
         // create flame instruction
         let fire_sprite = Sprite::new(context, "/LargeFlame.png", 4, 1)?;
-        let flame_draw_system = DrawSystem::new(Some(fire_sprite), Some("#fire-<column>"), 1.5);
+        let flame_draw_system = DrawSystem::new(Some(fire_sprite), Some("#fire <column>"), 1.5);
         let flame_size = flame_draw_system.get_size().unwrap_or((50.0, 50.0));
         let flame_game_object = GameObject::new(
             interface.location.x + interface.location.w / 2.0 - flame_size.0 / 2.0,
@@ -50,6 +50,7 @@ impl GameState {
             flame_size.1,
             None,
             None,
+            false,
         );
 
         // create player
@@ -66,6 +67,7 @@ impl GameState {
             player_size.1 * player_scale,
             Some(Box::new(player_physics_system)),
             None,
+            false,
         );
 
         let game_objects = vec![flame_game_object, player];
@@ -101,6 +103,7 @@ impl GameState {
                         flame_size.1 * scale,
                         Some(Box::new(physics_system)),
                         Some(Duration::from_secs(6)),
+                        true,
                     );
 
                     self.game_objects.push(flame_game_object);
@@ -123,9 +126,25 @@ impl EventHandler for GameState {
             }
 
             let screen_size = graphics::drawable_size(context);
+            let arena_size = (
+                screen_size.0 - self.interface.instruction_width,
+                screen_size.1,
+            );
+
+            let collidable_game_objects: Vec<GameObject> = self
+                .game_objects
+                .clone()
+                .into_iter()
+                .filter(|game_object| game_object.collidable)
+                .collect();
 
             self.game_objects.iter_mut().for_each(|game_object| {
-                game_object.update(timer::time_since_start(context), screen_size, context)
+                game_object.update(
+                    timer::time_since_start(context),
+                    arena_size,
+                    context,
+                    &collidable_game_objects,
+                );
             });
 
             self.game_objects

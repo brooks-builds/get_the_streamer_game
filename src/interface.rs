@@ -9,7 +9,7 @@ pub struct Interface {
     title: Text,
     instruction_background: Mesh,
     margin: f32,
-    instruction_width: f32,
+    pub instruction_width: f32,
     commands: Vec<Text>,
     command_height: usize,
     command_start_at: f32,

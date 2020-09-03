@@ -1,6 +1,7 @@
 pub mod item_physics;
 mod player_physics;
 
+use super::GameObject;
 use ggez::graphics::Rect;
 use ggez::Context;
 pub use item_physics::ItemPhysics;
@@ -13,5 +14,6 @@ pub trait PhysicsSystem {
         screen_size: (f32, f32),
         gravity_force: f32,
         context: &mut Context,
+        collidable_game_objects: &Vec<GameObject>,
     );
 }

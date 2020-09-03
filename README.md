@@ -15,13 +15,20 @@ get_the_streamer_game
   - [x] Have flame enitity drop
   - [x] Have flame entity stop when it hits the ground
   - [x] Have flame entity dissapear after 5 seconds
-- [ ] Implement player
+- [x] Implement player
   - [x] create player entity + graphic
   - [x] player can move left and right
-  - [ ] player slows down to a halt when not holding a move key down
-  - [ ] player can jump
-  - [ ] player can stand on ground
+  - [x] player slows down to a halt when not holding a move key down
+  - [x] player can jump
+  - [x] player can stand on ground
+  - [x] player cannot leave the arena
 - [ ] game is over after player is hit by an entity spawned by chat
+  - [ ] display game over text
+  - [ ] display who won
+  - [ ] display who participated
+- [ ] Streamer can win
+  - [ ] Add a timer
+  - [ ] If the streamer lives as long as the timer, display win message
 - [ ] Create a second entity that chat can spawn
 - [ ] Create a third entity that chat can spawn
 - [ ] Create a fourth entity that chat can spawn
@@ -30,7 +37,17 @@ get_the_streamer_game
   - [ ] Scale up the fire sprite
   - [ ] Cut the player sprites so that we have left run, right run, and stand
   - [ ] Switch player to have multiple sprites based on which direction they are moving (can mirror sprites by scale using a negative number [from #BareDoodah])
+  - [ ] Save a score to disk
+    - [ ] 1 point for participating
+    - [ ] 10 points for the win
+  - [ ] Display text for subscribers over their drops
+  - [ ] Stop drops outside of the game, but still on the screen (like in the instructions area)
 - [ ] Clean up code
   - [ ] Make command.rs nicer
   - [ ] Extracting command in lib/update is not great :(
-  - [ ] Not using children in game objects so remove them
+  - [x] Not using children in game objects so remove them
+- [ ] Deploy
+  - [ ] Create instructions for how to start the game
+  - [ ] Compile for Windows
+  - [ ] Compile for Mac
+  - [ ] Compile for Linux
