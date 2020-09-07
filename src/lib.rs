@@ -17,8 +17,11 @@ use interface::Interface;
 use physics::{ItemPhysics, PhysicsSystem, PlayerPhysics};
 use sprites::Sprite;
 use std::sync::mpsc::{channel, Receiver, Sender};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use twitch_chat_wrapper::chat_message::ChatMessage;
+
+const ONE_SECOND: Duration = Duration::from_secs(1);
+const GAME_TIME: Duration = Duration::from_secs(60);
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -29,6 +32,7 @@ pub struct GameState {
     player_hit_object_event: Receiver<Chatter>,
     winning_player: Option<Chatter>,
     teammates: Vec<Chatter>,
+    time_left_in_game: u64,
 }
 
 impl GameState {
@@ -47,7 +51,7 @@ impl GameState {
         let flame_size = flame_draw_system.get_size().unwrap_or((50.0, 50.0));
         let flame_game_object = GameObject::new(
             interface.location.x + interface.location.w / 2.0 - flame_size.0 / 2.0,
-            150.0,
+            200.0,
             Some(flame_draw_system),
             flame_size.0,
             flame_size.1,
@@ -88,6 +92,7 @@ impl GameState {
             winning_player: None,
             player_hit_object_event: receive_player_hit_object_event,
             teammates: vec![],
+            time_left_in_game: GAME_TIME.as_secs(),
         })
     }
 
@@ -137,6 +142,24 @@ impl EventHandler for GameState {
         while timer::check_update_time(context, self.framerate_target) {
             if let Some(_) = self.winning_player {
                 return Ok(());
+            }
+
+            let game_time_left = (GAME_TIME - timer::time_since_start(context)).as_secs();
+            if game_time_left == 0 {
+                self.winning_player =
+                    Some(Chatter::new("The Streamer".to_owned(), (200, 150, 230)));
+                self.teammates = self
+                    .teammates
+                    .clone()
+                    .into_iter()
+                    .map(|mut chatter| {
+                        chatter.name = format!("not {}", chatter.name);
+                        chatter
+                    })
+                    .collect();
+                return Ok(());
+            } else {
+                self.time_left_in_game = game_time_left;
             }
 
             if let Ok(chat_message) = self.receive_from_chat.try_recv() {
@@ -202,6 +225,7 @@ impl EventHandler for GameState {
             screen_size,
             self.winning_player.as_ref(),
             &self.teammates,
+            self.time_left_in_game,
         )?;
 
         graphics::present(context)

@@ -5,10 +5,12 @@ use ggez::graphics::{
 use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
 use rand::prelude::*;
+use std::time::Duration;
 
 const DROP_ZONE_COUNT: u8 = 10;
 const DROP_ZONE_HEIGHT: f32 = 50.0;
 const GAME_OVER_FONT_SIZE: f32 = 150.0;
+const TIMER_TEXT_SIZE: f32 = 50.0;
 
 pub struct Interface {
     title: Text,
@@ -39,7 +41,7 @@ impl Interface {
 
         title.set_font(Font::default(), Scale::uniform(50.0));
         let (title_width, title_height) = title.dimensions(context);
-        let margin = 10.0;
+        let margin = 100.0;
         let instruction_width = title_width as f32 + margin * 2.0;
         let location = Rect::new(
             screen_width - instruction_width,
@@ -126,12 +128,14 @@ impl Interface {
         screen_size: (f32, f32),
         winning_player: Option<&Chatter>,
         teammates: &Vec<Chatter>,
+        time_left: u64,
     ) -> GameResult<()> {
         self.draw_background(context)?;
         self.draw_title(context, screen_size)?;
         self.draw_commands(context, screen_size)?;
         self.draw_drop_zones(context)?;
         self.draw_game_objects(context)?;
+        self.display_time_left(context, time_left, screen_size)?;
 
         if let Some(chatter) = winning_player {
             self.draw_game_over_text(context, screen_size, chatter, teammates)?;
@@ -296,5 +300,20 @@ impl Interface {
 
     pub fn add_game_object(&mut self, game_object: GameObject) {
         self.game_objects.push(game_object);
+    }
+
+    fn display_time_left(
+        &self,
+        context: &mut Context,
+        time_left: u64,
+        (screen_width, screen_height): (f32, f32),
+    ) -> GameResult<()> {
+        let mut time_left_text = Text::new(format!("Time Left: {}", time_left));
+        time_left_text.set_font(Font::default(), Scale::uniform(TIMER_TEXT_SIZE));
+        time_left_text.set_bounds(Point2::new(screen_width, screen_height), Align::Right);
+
+        graphics::draw(context, &time_left_text, DrawParam::new())?;
+
+        Ok(())
     }
 }

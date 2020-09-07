@@ -27,8 +27,9 @@ get_the_streamer_game
   - [x] display who won
   - [x] display who participated
 - [ ] Streamer can win
-  - [ ] Add a timer
-  - [ ] If the streamer lives as long as the timer, display win message
+  - [x] Add a timer
+  - [x] If the streamer lives as long as the timer, display win message
+  - [ ] Fix bad performance around countdown timer
 - [ ] Create a second entity that chat can spawn
 - [ ] Create a third entity that chat can spawn
 - [ ] Create a fourth entity that chat can spawn
