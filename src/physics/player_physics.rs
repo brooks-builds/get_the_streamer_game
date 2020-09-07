@@ -1,23 +1,29 @@
-use super::{GameObject, PhysicsSystem};
+use super::{Chatter, GameObject, PhysicsSystem};
+use eyre::Result;
 use ggez::graphics::Rect;
 use ggez::input::keyboard::KeyCode;
 use ggez::nalgebra::Point2;
 use ggez::{input, Context};
+use std::sync::mpsc::Sender;
 
 const MOVE_FORCE: f32 = 2.0;
 const JUMP_FORCE: f32 = -8.5;
 const FRICTION: f32 = 0.15;
+const DEFAULT_CHATTER_NAME: &str = "Unknown Player";
 
+#[derive(Debug)]
 pub struct PlayerPhysics {
     velocity: Point2<f32>,
     affected_by_gravity: bool,
+    player_hit_object: Sender<Chatter>,
 }
 
 impl PlayerPhysics {
-    pub fn new() -> PlayerPhysics {
+    pub fn new(player_hit_object: Sender<Chatter>) -> PlayerPhysics {
         PlayerPhysics {
             velocity: Point2::new(0.0, 0.0),
             affected_by_gravity: true,
+            player_hit_object,
         }
     }
 
@@ -74,12 +80,17 @@ impl PhysicsSystem for PlayerPhysics {
         gravity_force: f32,
         context: &mut Context,
         collidable_game_objects: &Vec<GameObject>,
-    ) {
+    ) -> Result<()> {
         self.handle_input(context);
         self.stay_in_arena(location, arena);
 
         if let Some(game_object) = self.get_colliding_with(collidable_game_objects, location) {
-            println!("We collided with a game object!");
+            let chatter = if let Some(chatter) = game_object.chatter {
+                chatter
+            } else {
+                Chatter::new(DEFAULT_CHATTER_NAME.to_owned(), (255, 255, 255))
+            };
+            self.player_hit_object.send(chatter)?;
         }
 
         if self.affected_by_gravity {
@@ -93,5 +104,7 @@ impl PhysicsSystem for PlayerPhysics {
             let speed_decrease = opposite_velocity * FRICTION;
             self.velocity.x += speed_decrease
         }
+
+        Ok(())
     }
 }

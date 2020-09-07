@@ -1,10 +1,12 @@
 use super::{GameObject, PhysicsSystem};
+use eyre::Result;
 use ggez::graphics::Rect;
 use ggez::nalgebra::Point2;
 use ggez::Context;
 
 const MOVE_SPEED: f32 = 1.0;
 
+#[derive(Debug)]
 pub struct ItemPhysics {
     velocity: Point2<f32>,
     affected_by_gravity: bool,
@@ -27,7 +29,7 @@ impl PhysicsSystem for ItemPhysics {
         gravity_force: f32,
         context: &mut Context,
         _collidable_game_objects: &Vec<GameObject>,
-    ) {
+    ) -> Result<()> {
         if self.affected_by_gravity {
             self.velocity.y += gravity_force;
         }
@@ -40,5 +42,7 @@ impl PhysicsSystem for ItemPhysics {
             self.affected_by_gravity = false;
             location.y = screen_height.1 - location.h;
         }
+
+        Ok(())
     }
 }

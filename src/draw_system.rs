@@ -3,6 +3,7 @@ use ggez::graphics::{DrawParam, Font, Scale, Text};
 use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
 
+#[derive(Debug)]
 pub struct DrawSystem {
     sprite: Option<Sprite>,
     label: Option<Text>,

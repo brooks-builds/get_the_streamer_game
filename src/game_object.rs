@@ -1,4 +1,4 @@
-use super::{DrawSystem, PhysicsSystem};
+use super::{Chatter, DrawSystem, PhysicsSystem};
 use ggez::graphics::Rect;
 use ggez::nalgebra::Point2;
 use ggez::{Context, GameResult};
@@ -6,6 +6,7 @@ use std::time::{Duration, Instant};
 
 const GRAVITY_FORCE: f32 = 0.3;
 
+#[derive(Debug)]
 pub struct GameObject {
     pub location: Rect,
     draw_system: Option<DrawSystem>,
@@ -13,6 +14,7 @@ pub struct GameObject {
     birth_time: Instant,
     live_for: Option<Duration>,
     pub collidable: bool,
+    pub chatter: Option<Chatter>,
 }
 
 impl GameObject {
@@ -25,6 +27,7 @@ impl GameObject {
         physics_system: Option<Box<dyn PhysicsSystem>>,
         live_for: Option<Duration>,
         collidable: bool,
+        chatter: Option<Chatter>,
     ) -> GameObject {
         let live_until = if let Some(live_for) = live_for {
             Some(Instant::now() + live_for)
@@ -39,6 +42,7 @@ impl GameObject {
             live_for,
             birth_time: Instant::now(),
             collidable,
+            chatter,
         }
     }
 
@@ -90,6 +94,7 @@ impl Clone for GameObject {
             birth_time: self.birth_time,
             live_for: None,
             collidable: self.collidable,
+            chatter: self.chatter.clone(),
         }
     }
 }

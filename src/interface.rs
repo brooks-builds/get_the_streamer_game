@@ -1,9 +1,16 @@
-use ggez::graphics::{Color, DrawMode, DrawParam, Font, Mesh, MeshBuilder, Rect, Scale, Text};
+use super::{Chatter, GameObject};
+use ggez::graphics::{
+    Align, Color, DrawMode, DrawParam, Font, Mesh, MeshBuilder, Rect, Scale, Text,
+};
 use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
+use rand::prelude::*;
+use std::sync::mpsc::{channel, Receiver, Sender};
+use std::time::Duration;
 
 const DROP_ZONE_COUNT: u8 = 10;
 const DROP_ZONE_HEIGHT: f32 = 50.0;
+const GAME_OVER_FONT_SIZE: f32 = 150.0;
 
 pub struct Interface {
     title: Text,
@@ -18,6 +25,11 @@ pub struct Interface {
     drop_zone_background: Mesh,
     drop_zone_labels: Vec<Text>,
     single_drop_zone_width: f32,
+    game_over_text: Text,
+    dark_mask: Mesh,
+    game_objects: Vec<GameObject>,
+    teammates_count: usize,
+    teammate_locations: Vec<Point2<f32>>,
 }
 
 impl Interface {
@@ -78,6 +90,18 @@ impl Interface {
             .rectangle(DrawMode::stroke(1.0), drop_zones[0], graphics::WHITE)
             .build(context)?;
 
+        let mut game_over_text = Text::new("Game Over!");
+        game_over_text.set_font(Font::default(), Scale::uniform(GAME_OVER_FONT_SIZE));
+        game_over_text.set_bounds(Point2::new(screen_width, screen_height), Align::Center);
+
+        let dark_mask = MeshBuilder::new()
+            .rectangle(
+                DrawMode::fill(),
+                Rect::new(0.0, 0.0, screen_width, screen_height),
+                Color::new(0.0, 0.0, 0.0, 0.9),
+            )
+            .build(context)?;
+
         Ok(Interface {
             title,
             instruction_background,
@@ -91,13 +115,29 @@ impl Interface {
             drop_zone_background,
             drop_zone_labels,
             single_drop_zone_width,
+            game_over_text,
+            dark_mask,
+            game_objects: vec![],
+            teammates_count: 0,
+            teammate_locations: vec![],
         })
     }
-    pub fn draw(&self, context: &mut Context, screen_size: (f32, f32)) -> GameResult<()> {
+    pub fn draw(
+        &mut self,
+        context: &mut Context,
+        screen_size: (f32, f32),
+        winning_player: Option<&Chatter>,
+        teammates: &Vec<Chatter>,
+    ) -> GameResult<()> {
         self.draw_background(context)?;
         self.draw_title(context, screen_size)?;
         self.draw_commands(context, screen_size)?;
         self.draw_drop_zones(context)?;
+        self.draw_game_objects(context)?;
+
+        if let Some(chatter) = winning_player {
+            self.draw_game_over_text(context, screen_size, chatter, teammates)?;
+        }
 
         Ok(())
     }
@@ -183,5 +223,80 @@ impl Interface {
             index as f32 * self.single_drop_zone_width + self.single_drop_zone_width / 2.0,
             DROP_ZONE_HEIGHT / 2.0,
         )
+    }
+
+    fn draw_game_over_text(
+        &mut self,
+        context: &mut Context,
+        (screen_width, screen_height): (f32, f32),
+        winner: &Chatter,
+        teammates: &Vec<Chatter>,
+    ) -> GameResult<()> {
+        graphics::draw(context, &self.dark_mask, DrawParam::default())?;
+
+        graphics::draw(
+            context,
+            &self.game_over_text,
+            DrawParam::default().dest(Point2::new(0.0, 50.0)),
+        )?;
+
+        let mut winner_text = Text::new(format!("{} won!", winner.name));
+        winner_text.set_font(Font::default(), Scale::uniform(100.0));
+        winner_text.set_bounds(Point2::new(screen_width, screen_height), Align::Center);
+        graphics::draw(
+            context,
+            &winner_text,
+            DrawParam::new()
+                .dest(Point2::new(0.0, 200.0))
+                .color(Color::from_rgb(winner.red, winner.green, winner.blue)),
+        )?;
+
+        if self.teammates_count < teammates.len() {
+            let mut rng = thread_rng();
+            self.teammates_count += 1;
+            self.teammate_locations.push(Point2::new(
+                rng.gen_range(0.0, screen_width - 100.0),
+                rng.gen_range(500.0, screen_height - 50.0),
+            ));
+        }
+
+        let mut teammates_text = Text::new("with Teammates:");
+        teammates_text.set_font(Font::default(), Scale::uniform(50.0));
+        teammates_text.set_bounds(Point2::new(screen_width, screen_height), Align::Center);
+
+        graphics::draw(
+            context,
+            &teammates_text,
+            DrawParam::new().dest(Point2::new(0.0, 400.0)),
+        )?;
+
+        for teammates_index in 0..self.teammates_count {
+            if *winner == teammates[teammates_index] {
+                continue;
+            }
+
+            let teammate = &teammates[teammates_index];
+            let mut teammate_name_text = Text::new(teammate.name.to_owned());
+            teammate_name_text.set_font(Font::default(), Scale::uniform(75.0));
+            graphics::draw(
+                context,
+                &teammate_name_text,
+                DrawParam::new()
+                    .color(Color::from_rgb(teammate.red, teammate.green, teammate.blue))
+                    .dest(self.teammate_locations[teammates_index]),
+            )?;
+        }
+
+        Ok(())
+    }
+
+    fn draw_game_objects(&self, context: &mut Context) -> GameResult<()> {
+        self.game_objects
+            .iter()
+            .try_for_each(|game_object| game_object.draw(context))
+    }
+
+    pub fn add_game_object(&mut self, game_object: GameObject) {
+        self.game_objects.push(game_object);
     }
 }

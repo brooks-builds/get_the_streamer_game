@@ -22,10 +22,10 @@ get_the_streamer_game
   - [x] player can jump
   - [x] player can stand on ground
   - [x] player cannot leave the arena
-- [ ] game is over after player is hit by an entity spawned by chat
-  - [ ] display game over text
-  - [ ] display who won
-  - [ ] display who participated
+- [x] game is over after player is hit by an entity spawned by chat
+  - [x] display game over text
+  - [x] display who won
+  - [x] display who participated
 - [ ] Streamer can win
   - [ ] Add a timer
   - [ ] If the streamer lives as long as the timer, display win message

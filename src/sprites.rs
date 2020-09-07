@@ -3,6 +3,7 @@ use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
 use std::time::Duration;
 
+#[derive(Debug)]
 pub struct Sprite {
     image: Image,
     individual_sprite_rects: Vec<Rect>,

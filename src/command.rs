@@ -1,8 +1,9 @@
+use super::Chatter;
 use ggez::GameResult;
 
 #[derive(PartialEq, Debug)]
 pub enum Command {
-    Fire(u8),
+    Fire { id: u8, chatter: Chatter },
 }
 
 impl Command {
@@ -12,7 +13,7 @@ impl Command {
     /// For example
     /// let command = Command::new("#fire 5").unwrap();
     /// assert_eq(command, Command::fire(5));
-    pub fn new(message: &str) -> Result<Option<Command>, &'static str> {
+    pub fn new(message: &str, chatter: Chatter) -> Result<Option<Command>, &'static str> {
         if !message.starts_with('#') {
             return Ok(None);
         }
@@ -26,7 +27,7 @@ impl Command {
                             Ok(number) => number,
                             Err(error) => return Err("I coundn't tell what column to drop into"),
                         };
-                        Ok(Some(Command::Fire(id)))
+                        Ok(Some(Command::Fire { id, chatter }))
                     } else {
                         Err("You must give a column to drop into")
                     }

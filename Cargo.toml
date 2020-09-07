@@ -9,3 +9,5 @@ edition = "2018"
 [dependencies]
 ggez = "0.5.1"
 twitch_chat_wrapper = { path="../twitch_chat_wrapper" }
+eyre = "0.6.0"
+rand = "0.7.3"
