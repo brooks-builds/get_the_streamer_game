@@ -51,3 +51,5 @@ get_the_streamer_game
   - [ ] Compile for Windows
   - [ ] Compile for Mac
   - [ ] Compile for Linux
+- [ ] Feature Requests
+  - [ ] Blink the teammates names in the game over screen (Chantillycake)

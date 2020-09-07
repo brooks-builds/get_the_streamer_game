@@ -5,8 +5,6 @@ use ggez::graphics::{
 use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
 use rand::prelude::*;
-use std::sync::mpsc::{channel, Receiver, Sender};
-use std::time::Duration;
 
 const DROP_ZONE_COUNT: u8 = 10;
 const DROP_ZONE_HEIGHT: f32 = 50.0;
@@ -145,9 +143,9 @@ impl Interface {
     fn draw_title(
         &self,
         context: &mut Context,
-        (screen_width, screen_height): (f32, f32),
+        (screen_width, _screen_height): (f32, f32),
     ) -> GameResult<()> {
-        let (title_width, title_height) = self.title.dimensions(context);
+        let (title_width, _title_height) = self.title.dimensions(context);
 
         graphics::draw(
             context,
@@ -166,7 +164,7 @@ impl Interface {
     fn draw_commands(
         &self,
         context: &mut Context,
-        (screen_width, screen_height): (f32, f32),
+        (screen_width, _screen_height): (f32, f32),
     ) -> GameResult<()> {
         self.commands
             .iter()

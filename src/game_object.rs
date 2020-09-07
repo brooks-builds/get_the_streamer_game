@@ -1,4 +1,5 @@
 use super::{Chatter, DrawSystem, PhysicsSystem};
+use eyre::Result;
 use ggez::graphics::Rect;
 use ggez::nalgebra::Point2;
 use ggez::{Context, GameResult};
@@ -29,7 +30,7 @@ impl GameObject {
         collidable: bool,
         chatter: Option<Chatter>,
     ) -> GameObject {
-        let live_until = if let Some(live_for) = live_for {
+        let _live_until = if let Some(live_for) = live_for {
             Some(Instant::now() + live_for)
         } else {
             None
@@ -52,7 +53,7 @@ impl GameObject {
         screen_size: (f32, f32),
         context: &mut Context,
         collidable_game_objects: &Vec<GameObject>,
-    ) {
+    ) -> Result<()> {
         if let Some(physics_system) = &mut self.physics_system {
             physics_system.update(
                 &mut self.location,
@@ -60,12 +61,14 @@ impl GameObject {
                 GRAVITY_FORCE,
                 context,
                 collidable_game_objects,
-            );
+            )?;
         }
 
         if let Some(draw_system) = &mut self.draw_system {
             draw_system.update(time_since_start);
         }
+
+        Ok(())
     }
 
     pub fn draw(&self, context: &mut Context) -> GameResult<()> {

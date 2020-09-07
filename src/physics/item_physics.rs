@@ -4,8 +4,6 @@ use ggez::graphics::Rect;
 use ggez::nalgebra::Point2;
 use ggez::Context;
 
-const MOVE_SPEED: f32 = 1.0;
-
 #[derive(Debug)]
 pub struct ItemPhysics {
     velocity: Point2<f32>,
@@ -27,7 +25,7 @@ impl PhysicsSystem for ItemPhysics {
         location: &mut Rect,
         screen_height: (f32, f32),
         gravity_force: f32,
-        context: &mut Context,
+        _context: &mut Context,
         _collidable_game_objects: &Vec<GameObject>,
     ) -> Result<()> {
         if self.affected_by_gravity {

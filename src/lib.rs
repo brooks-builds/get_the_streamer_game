@@ -4,7 +4,6 @@ mod draw_system;
 mod game_object;
 mod interface;
 mod physics;
-mod player_input;
 mod sprites;
 
 use chatter::Chatter;
@@ -13,8 +12,7 @@ use draw_system::DrawSystem;
 use game_object::GameObject;
 use ggez::event::EventHandler;
 use ggez::graphics::BLACK;
-use ggez::input::keyboard::KeyCode;
-use ggez::{graphics, input, timer, Context, GameResult};
+use ggez::{graphics, timer, Context, GameResult};
 use interface::Interface;
 use physics::{ItemPhysics, PhysicsSystem, PlayerPhysics};
 use sprites::Sprite;
@@ -170,12 +168,14 @@ impl EventHandler for GameState {
                 .collect();
 
             self.game_objects.iter_mut().for_each(|game_object| {
-                game_object.update(
+                if let Err(error) = game_object.update(
                     timer::time_since_start(context),
                     arena_size,
                     context,
                     &collidable_game_objects,
-                );
+                ) {
+                    eprintln!("error running update: {}", error)
+                }
             });
 
             self.game_objects

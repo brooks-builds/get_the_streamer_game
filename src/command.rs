@@ -1,5 +1,4 @@
 use super::Chatter;
-use ggez::GameResult;
 
 #[derive(PartialEq, Debug)]
 pub enum Command {
@@ -25,7 +24,7 @@ impl Command {
                     if let Some(id) = parts.next() {
                         let id: u8 = match id.parse() {
                             Ok(number) => number,
-                            Err(error) => return Err("I coundn't tell what column to drop into"),
+                            Err(_error) => return Err("I coundn't tell what column to drop into"),
                         };
                         Ok(Some(Command::Fire { id, chatter }))
                     } else {

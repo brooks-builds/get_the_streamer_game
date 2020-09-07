@@ -9,7 +9,7 @@ pub struct Chatter {
 impl Chatter {
     pub fn new(name: String, color: (u8, u8, u8)) -> Chatter {
         let (red, green, blue) = if color.0 == 0 && color.1 == 0 && color.2 == 0 {
-            (50, 50, 50)
+            (100, 100, 100)
         } else {
             color
         };
