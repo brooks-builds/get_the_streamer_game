@@ -1,16 +1,15 @@
 use super::{Chatter, GameObject};
+use eyre::Result;
 use ggez::graphics::{
     Align, Color, DrawMode, DrawParam, Font, Mesh, MeshBuilder, Rect, Scale, Text,
 };
 use ggez::nalgebra::Point2;
-use ggez::{graphics, Context, GameResult};
+use ggez::{graphics, timer, Context, GameResult};
 use rand::prelude::*;
-use std::time::Duration;
 
 const DROP_ZONE_COUNT: u8 = 10;
 const DROP_ZONE_HEIGHT: f32 = 50.0;
 const GAME_OVER_FONT_SIZE: f32 = 150.0;
-const TIMER_TEXT_SIZE: f32 = 50.0;
 
 pub struct Interface {
     title: Text,
@@ -128,14 +127,12 @@ impl Interface {
         screen_size: (f32, f32),
         winning_player: Option<&Chatter>,
         teammates: &Vec<Chatter>,
-        time_left: u64,
     ) -> GameResult<()> {
         self.draw_background(context)?;
         self.draw_title(context, screen_size)?;
         self.draw_commands(context, screen_size)?;
         self.draw_drop_zones(context)?;
         self.draw_game_objects(context)?;
-        self.display_time_left(context, time_left, screen_size)?;
 
         if let Some(chatter) = winning_player {
             self.draw_game_over_text(context, screen_size, chatter, teammates)?;
@@ -302,18 +299,18 @@ impl Interface {
         self.game_objects.push(game_object);
     }
 
-    fn display_time_left(
-        &self,
-        context: &mut Context,
-        time_left: u64,
-        (screen_width, screen_height): (f32, f32),
-    ) -> GameResult<()> {
-        let mut time_left_text = Text::new(format!("Time Left: {}", time_left));
-        time_left_text.set_font(Font::default(), Scale::uniform(TIMER_TEXT_SIZE));
-        time_left_text.set_bounds(Point2::new(screen_width, screen_height), Align::Right);
+    pub fn update(&mut self, context: &mut Context) -> Result<()> {
+        let time_since_start = timer::time_since_start(context);
+        let screen_size = graphics::drawable_size(context);
+        let collidable_game_objects = vec![];
 
-        graphics::draw(context, &time_left_text, DrawParam::new())?;
-
-        Ok(())
+        self.game_objects.iter_mut().try_for_each(|game_object| {
+            game_object.update(
+                time_since_start,
+                screen_size,
+                context,
+                &collidable_game_objects,
+            )
+        })
     }
 }

@@ -8,20 +8,19 @@ mod sprites;
 
 use chatter::Chatter;
 use command::Command;
-use draw_system::DrawSystem;
+use draw_system::{DrawSystem, GameObjectDrawSystem, TimerDrawSystem};
 use game_object::GameObject;
 use ggez::event::EventHandler;
 use ggez::graphics::BLACK;
 use ggez::{graphics, timer, Context, GameResult};
 use interface::Interface;
-use physics::{ItemPhysics, PhysicsSystem, PlayerPhysics};
+use physics::{ItemPhysics, PhysicsSystem, PlayerPhysics, TimerPhysicsSystem};
 use sprites::Sprite;
 use std::sync::mpsc::{channel, Receiver, Sender};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use twitch_chat_wrapper::chat_message::ChatMessage;
 
-const ONE_SECOND: Duration = Duration::from_secs(1);
-const GAME_TIME: Duration = Duration::from_secs(60);
+const GAME_TIME: Duration = Duration::from_secs(15);
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -32,7 +31,6 @@ pub struct GameState {
     player_hit_object_event: Receiver<Chatter>,
     winning_player: Option<Chatter>,
     teammates: Vec<Chatter>,
-    time_left_in_game: u64,
 }
 
 impl GameState {
@@ -47,12 +45,13 @@ impl GameState {
 
         // create flame instruction
         let fire_sprite = Sprite::new(context, "/LargeFlame.png", 4, 1)?;
-        let flame_draw_system = DrawSystem::new(Some(fire_sprite), Some("#fire <column>"), 1.5);
+        let flame_draw_system =
+            GameObjectDrawSystem::new(Some(fire_sprite), Some("#fire <column>"), 1.5);
         let flame_size = flame_draw_system.get_size().unwrap_or((50.0, 50.0));
         let flame_game_object = GameObject::new(
             interface.location.x + interface.location.w / 2.0 - flame_size.0 / 2.0,
             200.0,
-            Some(flame_draw_system),
+            Some(Box::new(flame_draw_system)),
             flame_size.0,
             flame_size.1,
             None,
@@ -61,17 +60,35 @@ impl GameState {
             None,
         );
 
+        // create timer block
+        let timer_draw_system = TimerDrawSystem::new(screen_size, context)?;
+        let timer_size = timer_draw_system.get_size().unwrap_or((5.0, screen_size.1));
+        let timer_physics_system =
+            TimerPhysicsSystem::new(timer_size.1, GAME_TIME, framerate_target as f32);
+        let timer_game_object = GameObject::new(
+            screen_size.0 - interface.instruction_width,
+            0.0,
+            Some(Box::new(timer_draw_system)),
+            timer_size.0,
+            timer_size.1,
+            Some(Box::new(timer_physics_system)),
+            None,
+            false,
+            None,
+        );
+        interface.add_game_object(timer_game_object);
+
         // create player
         let player_scale = 4.0;
         let player_sprite = Sprite::new(context, "/PlayerCharacter.png", 24, 1)?;
-        let player_draw_system = DrawSystem::new(Some(player_sprite), None, player_scale);
+        let player_draw_system = GameObjectDrawSystem::new(Some(player_sprite), None, player_scale);
         let player_size = player_draw_system.get_size().unwrap_or((50.0, 50.0));
         let (send_player_hit_object_event, receive_player_hit_object_event) = channel();
         let player_physics_system = PlayerPhysics::new(send_player_hit_object_event);
         let player = GameObject::new(
             250.0,
             250.0,
-            Some(player_draw_system),
+            Some(Box::new(player_draw_system)),
             player_size.0 * player_scale,
             player_size.1 * player_scale,
             Some(Box::new(player_physics_system)),
@@ -92,7 +109,6 @@ impl GameState {
             winning_player: None,
             player_hit_object_event: receive_player_hit_object_event,
             teammates: vec![],
-            time_left_in_game: GAME_TIME.as_secs(),
         })
     }
 
@@ -110,13 +126,14 @@ impl GameState {
                     let scale = 2.0;
                     let drop_zone_location = self.interface.get_column_coordinates_by_index(column);
                     let fire_sprite = Sprite::new(context, "/LargeFlame.png", 4, 1)?;
-                    let flame_draw_system = DrawSystem::new(Some(fire_sprite), None, scale);
+                    let flame_draw_system =
+                        GameObjectDrawSystem::new(Some(fire_sprite), None, scale);
                     let flame_size = flame_draw_system.get_size().unwrap_or((50.0, 50.0));
                     let physics_system = ItemPhysics::new();
                     let flame_game_object = GameObject::new(
                         drop_zone_location.x - flame_size.0 / 2.0,
                         drop_zone_location.y - flame_size.1 / 2.0,
-                        Some(flame_draw_system),
+                        Some(Box::new(flame_draw_system)),
                         flame_size.0 * scale,
                         flame_size.1 * scale,
                         Some(Box::new(physics_system)),
@@ -143,6 +160,7 @@ impl EventHandler for GameState {
             if let Some(_) = self.winning_player {
                 return Ok(());
             }
+            let screen_size = graphics::drawable_size(context);
 
             let game_time_left = (GAME_TIME - timer::time_since_start(context)).as_secs();
             if game_time_left == 0 {
@@ -158,8 +176,6 @@ impl EventHandler for GameState {
                     })
                     .collect();
                 return Ok(());
-            } else {
-                self.time_left_in_game = game_time_left;
             }
 
             if let Ok(chat_message) = self.receive_from_chat.try_recv() {
@@ -177,7 +193,6 @@ impl EventHandler for GameState {
                 }
             }
 
-            let screen_size = graphics::drawable_size(context);
             let arena_size = (
                 screen_size.0 - self.interface.instruction_width,
                 screen_size.1,
@@ -207,6 +222,10 @@ impl EventHandler for GameState {
             if let Ok(chatter_name) = self.player_hit_object_event.try_recv() {
                 self.winning_player = Some(chatter_name);
             }
+
+            if let Err(error) = self.interface.update(context) {
+                eprintln!("Error updating game objects in interface: {}", error);
+            }
         }
         Ok(())
     }
@@ -225,7 +244,6 @@ impl EventHandler for GameState {
             screen_size,
             self.winning_player.as_ref(),
             &self.teammates,
-            self.time_left_in_game,
         )?;
 
         graphics::present(context)

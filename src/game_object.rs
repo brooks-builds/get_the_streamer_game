@@ -10,7 +10,7 @@ const GRAVITY_FORCE: f32 = 0.3;
 #[derive(Debug)]
 pub struct GameObject {
     pub location: Rect,
-    draw_system: Option<DrawSystem>,
+    draw_system: Option<Box<dyn DrawSystem>>,
     physics_system: Option<Box<dyn PhysicsSystem>>,
     birth_time: Instant,
     live_for: Option<Duration>,
@@ -22,7 +22,7 @@ impl GameObject {
     pub fn new(
         x: f32,
         y: f32,
-        draw_system: Option<DrawSystem>,
+        draw_system: Option<Box<dyn DrawSystem>>,
         width: f32,
         height: f32,
         physics_system: Option<Box<dyn PhysicsSystem>>,

@@ -26,10 +26,10 @@ get_the_streamer_game
   - [x] display game over text
   - [x] display who won
   - [x] display who participated
-- [ ] Streamer can win
+- [x] Streamer can win
   - [x] Add a timer
   - [x] If the streamer lives as long as the timer, display win message
-  - [ ] Fix bad performance around countdown timer
+  - [x] Fix bad performance around countdown timer
 - [ ] Create a second entity that chat can spawn
 - [ ] Create a third entity that chat can spawn
 - [ ] Create a fourth entity that chat can spawn
@@ -43,6 +43,10 @@ get_the_streamer_game
     - [ ] 10 points for the win
   - [ ] Display text for subscribers over their drops
   - [ ] Stop drops outside of the game, but still on the screen (like in the instructions area)
+  - [ ] Add custom winning messages
+    - [ ] Victory is Mine!
+    - [ ] Who is the Best?
+    - [ ] Not today!
 - [ ] Clean up code
   - [ ] Make command.rs nicer
   - [ ] Extracting command in lib/update is not great :(

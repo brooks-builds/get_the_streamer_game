@@ -1,17 +1,21 @@
-use super::Sprite;
+use super::{DrawSystem, Sprite};
 use ggez::graphics::{DrawParam, Font, Scale, Text};
 use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
 
 #[derive(Debug)]
-pub struct DrawSystem {
+pub struct GameObjectDrawSystem {
     sprite: Option<Sprite>,
     label: Option<Text>,
     scale_by: f32,
 }
 
-impl DrawSystem {
-    pub fn new(sprite: Option<Sprite>, label: Option<&'static str>, scale_by: f32) -> DrawSystem {
+impl GameObjectDrawSystem {
+    pub fn new(
+        sprite: Option<Sprite>,
+        label: Option<&'static str>,
+        scale_by: f32,
+    ) -> GameObjectDrawSystem {
         let label = match label {
             Some(text) => {
                 let mut text = Text::new(text);
@@ -20,20 +24,22 @@ impl DrawSystem {
             }
             None => None,
         };
-        DrawSystem {
+        GameObjectDrawSystem {
             sprite,
             label,
             scale_by,
         }
     }
+}
 
-    pub fn update(&mut self, time_since_start: std::time::Duration) {
+impl DrawSystem for GameObjectDrawSystem {
+    fn update(&mut self, time_since_start: std::time::Duration) {
         if let Some(sprite) = &mut self.sprite {
             sprite.update(time_since_start);
         }
     }
 
-    pub fn draw(&self, context: &mut Context, location: Point2<f32>) -> GameResult<()> {
+    fn draw(&self, context: &mut Context, location: Point2<f32>) -> GameResult<()> {
         if let Some(sprite) = &self.sprite {
             sprite.draw(context, location, self.scale_by)?;
         }
@@ -56,7 +62,7 @@ impl DrawSystem {
         Ok(())
     }
 
-    pub fn get_size(&self) -> Option<(f32, f32)> {
+    fn get_size(&self) -> Option<(f32, f32)> {
         if let Some(sprite) = &self.sprite {
             Some((sprite.width, sprite.height))
         } else {
