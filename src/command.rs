@@ -3,6 +3,7 @@ use super::Chatter;
 #[derive(PartialEq, Debug)]
 pub enum Command {
     Fire { id: u8, chatter: Chatter },
+    Sword { id: u8, chatter: Chatter },
 }
 
 impl Command {
@@ -24,9 +25,20 @@ impl Command {
                     if let Some(id) = parts.next() {
                         let id: u8 = match id.parse() {
                             Ok(number) => number,
-                            Err(_error) => return Err("I coundn't tell what column to drop into"),
+                            Err(_error) => return Err("I couldn't tell what column to drop into"),
                         };
                         Ok(Some(Command::Fire { id, chatter }))
+                    } else {
+                        Err("You must give a column to drop into")
+                    }
+                }
+                "#sword" => {
+                    if let Some(id) = parts.next() {
+                        let id: u8 = match id.parse() {
+                            Ok(number) => number,
+                            Err(_error) => return Err("I couldn't tell what column to drop into"),
+                        };
+                        Ok(Some(Command::Sword { id, chatter }))
                     } else {
                         Err("You must give a column to drop into")
                     }

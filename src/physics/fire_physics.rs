@@ -5,21 +5,21 @@ use ggez::nalgebra::Point2;
 use ggez::Context;
 
 #[derive(Debug)]
-pub struct ItemPhysics {
+pub struct FirePhysics {
     velocity: Point2<f32>,
     affected_by_gravity: bool,
 }
 
-impl ItemPhysics {
-    pub fn new() -> ItemPhysics {
-        ItemPhysics {
+impl FirePhysics {
+    pub fn new() -> FirePhysics {
+        FirePhysics {
             velocity: Point2::new(0.0, 0.0),
             affected_by_gravity: true,
         }
     }
 }
 
-impl PhysicsSystem for ItemPhysics {
+impl PhysicsSystem for FirePhysics {
     fn update(
         &mut self,
         location: &mut Rect,
@@ -27,6 +27,7 @@ impl PhysicsSystem for ItemPhysics {
         gravity_force: f32,
         _context: &mut Context,
         _collidable_game_objects: &Vec<GameObject>,
+        _rotation: &mut f32,
     ) -> Result<()> {
         if self.affected_by_gravity {
             self.velocity.y += gravity_force;

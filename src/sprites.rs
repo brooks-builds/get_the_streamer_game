@@ -61,6 +61,7 @@ impl Sprite {
         context: &mut Context,
         location: Point2<f32>,
         scale_by: f32,
+        rotation: &f32,
     ) -> GameResult<()> {
         graphics::draw(
             context,
@@ -68,7 +69,8 @@ impl Sprite {
             DrawParam::new()
                 .src(self.individual_sprite_rects[self.rect_index])
                 .dest(location)
-                .scale([scale_by, scale_by]),
+                .scale([scale_by, scale_by])
+                .rotation(*rotation),
         )
     }
     pub fn update(&mut self, time_since_start: std::time::Duration) {

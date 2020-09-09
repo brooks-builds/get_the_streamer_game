@@ -1,13 +1,15 @@
-pub mod item_physics;
+pub mod fire_physics;
 mod player_physics;
+mod sword_physics;
 mod timer_physics;
 
 use super::{Chatter, GameObject};
 use eyre::Result;
+pub use fire_physics::FirePhysics;
 use ggez::graphics::Rect;
 use ggez::Context;
-pub use item_physics::ItemPhysics;
 pub use player_physics::PlayerPhysics;
+pub use sword_physics::SwordPhysics;
 pub use timer_physics::TimerPhysicsSystem;
 
 pub trait PhysicsSystem
@@ -21,5 +23,6 @@ where
         gravity_force: f32,
         context: &mut Context,
         collidable_game_objects: &Vec<GameObject>,
+        rotation: &mut f32,
     ) -> Result<()>;
 }

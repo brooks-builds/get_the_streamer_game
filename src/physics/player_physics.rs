@@ -7,7 +7,7 @@ use ggez::{input, Context};
 use std::sync::mpsc::Sender;
 
 const MOVE_FORCE: f32 = 2.0;
-const JUMP_FORCE: f32 = -8.5;
+const JUMP_FORCE: f32 = -12.5;
 const FRICTION: f32 = 0.15;
 const DEFAULT_CHATTER_NAME: &str = "Unknown Player";
 
@@ -80,6 +80,7 @@ impl PhysicsSystem for PlayerPhysics {
         gravity_force: f32,
         context: &mut Context,
         collidable_game_objects: &Vec<GameObject>,
+        _rotation: &mut f32,
     ) -> Result<()> {
         self.handle_input(context);
         self.stay_in_arena(location, arena);

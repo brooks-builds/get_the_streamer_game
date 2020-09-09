@@ -14,13 +14,13 @@ use ggez::event::EventHandler;
 use ggez::graphics::BLACK;
 use ggez::{graphics, timer, Context, GameResult};
 use interface::Interface;
-use physics::{ItemPhysics, PhysicsSystem, PlayerPhysics, TimerPhysicsSystem};
+use physics::{FirePhysics, PhysicsSystem, PlayerPhysics, SwordPhysics, TimerPhysicsSystem};
 use sprites::Sprite;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::time::Duration;
 use twitch_chat_wrapper::chat_message::ChatMessage;
 
-const GAME_TIME: Duration = Duration::from_secs(15);
+const GAME_TIME: Duration = Duration::from_secs(500);
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -60,6 +60,25 @@ impl GameState {
             None,
         );
 
+        // create sword instruction
+        let sword_sprite = Sprite::new(context, "/item1BIT_sword.png", 1, 1)?;
+        let sword_draw_system =
+            GameObjectDrawSystem::new(Some(sword_sprite), Some("#sword <column>"), 2.5);
+        let sword_size = sword_draw_system.get_size().unwrap_or((50.0, 50.0));
+        let sword_game_object = GameObject::new(
+            interface.location.x + interface.location.w / 2.0 - sword_size.0 / 2.0,
+            350.0,
+            Some(Box::new(sword_draw_system)),
+            sword_size.0,
+            sword_size.1,
+            None,
+            None,
+            false,
+            None,
+        );
+
+        interface.add_game_object(sword_game_object);
+
         // create timer block
         let timer_draw_system = TimerDrawSystem::new(screen_size, context)?;
         let timer_size = timer_draw_system.get_size().unwrap_or((5.0, screen_size.1));
@@ -89,8 +108,8 @@ impl GameState {
             250.0,
             250.0,
             Some(Box::new(player_draw_system)),
-            player_size.0 * player_scale,
-            player_size.1 * player_scale,
+            player_size.0,
+            player_size.1,
             Some(Box::new(player_physics_system)),
             None,
             false,
@@ -129,13 +148,13 @@ impl GameState {
                     let flame_draw_system =
                         GameObjectDrawSystem::new(Some(fire_sprite), None, scale);
                     let flame_size = flame_draw_system.get_size().unwrap_or((50.0, 50.0));
-                    let physics_system = ItemPhysics::new();
+                    let physics_system = FirePhysics::new();
                     let flame_game_object = GameObject::new(
                         drop_zone_location.x - flame_size.0 / 2.0,
                         drop_zone_location.y - flame_size.1 / 2.0,
                         Some(Box::new(flame_draw_system)),
-                        flame_size.0 * scale,
-                        flame_size.1 * scale,
+                        flame_size.0,
+                        flame_size.1,
                         Some(Box::new(physics_system)),
                         Some(Duration::from_secs(6)),
                         true,
@@ -143,6 +162,34 @@ impl GameState {
                     );
 
                     self.game_objects.push(flame_game_object);
+                    if !self.teammates.contains(&chatter) {
+                        self.teammates.push(chatter);
+                    }
+                }
+                Command::Sword {
+                    id: column,
+                    chatter,
+                } => {
+                    let scale = 3.0;
+                    let drop_zone_location = self.interface.get_column_coordinates_by_index(column);
+                    let sword_sprite = Sprite::new(context, "/item1BIT_sword.png", 1, 1)?;
+                    let sword_draw_system =
+                        GameObjectDrawSystem::new(Some(sword_sprite), None, scale);
+                    let sword_size = sword_draw_system.get_size().unwrap_or((50.0, 50.0));
+                    let sword_physics = SwordPhysics::new();
+                    let sword_game_object = GameObject::new(
+                        drop_zone_location.x - sword_size.0 / 2.0,
+                        drop_zone_location.y - sword_size.1 / 2.0,
+                        Some(Box::new(sword_draw_system)),
+                        sword_size.0,
+                        sword_size.1,
+                        Some(Box::new(sword_physics)),
+                        None,
+                        true,
+                        Some(chatter.clone()),
+                    );
+
+                    self.game_objects.push(sword_game_object);
                     if !self.teammates.contains(&chatter) {
                         self.teammates.push(chatter);
                     }

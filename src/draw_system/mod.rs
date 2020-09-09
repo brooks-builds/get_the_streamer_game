@@ -12,6 +12,6 @@ where
     Self: std::fmt::Debug,
 {
     fn update(&mut self, time_since_start: std::time::Duration);
-    fn draw(&self, context: &mut Context, location: Point2<f32>) -> GameResult<()>;
+    fn draw(&self, context: &mut Context, location: Point2<f32>, rotation: &f32) -> GameResult<()>;
     fn get_size(&self) -> Option<(f32, f32)>;
 }

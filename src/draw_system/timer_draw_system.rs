@@ -37,7 +37,12 @@ impl TimerDrawSystem {
 impl DrawSystem for TimerDrawSystem {
     fn update(&mut self, _time_since_start: std::time::Duration) {}
 
-    fn draw(&self, context: &mut Context, location: Point2<f32>) -> GameResult<()> {
+    fn draw(
+        &self,
+        context: &mut Context,
+        location: Point2<f32>,
+        _rotation: &f32,
+    ) -> GameResult<()> {
         graphics::draw(context, &self.timer, DrawParam::new().dest(location))
     }
 

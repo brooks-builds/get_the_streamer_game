@@ -31,6 +31,11 @@ get_the_streamer_game
   - [x] If the streamer lives as long as the timer, display win message
   - [x] Fix bad performance around countdown timer
 - [ ] Create a second entity that chat can spawn
+  - [ ] spin the sword (look at offset [@ootsby])
+- Refactor
+  - [ ] Create command data struct
+  - [ ] abstract redundant command creation code into a function
+  - [ ] abstract redundant entity creation code into a function
 - [ ] Create a third entity that chat can spawn
 - [ ] Create a fourth entity that chat can spawn
 - [ ] Polish
@@ -58,3 +63,5 @@ get_the_streamer_game
   - [ ] Compile for Linux
 - [ ] Feature Requests
   - [ ] Blink the teammates names in the game over screen (Chantillycake)
+- [ ] Maybe if we have performance issues
+  - [ ] Load and store sprites in a data structure to get references later

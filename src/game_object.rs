@@ -16,6 +16,7 @@ pub struct GameObject {
     live_for: Option<Duration>,
     pub collidable: bool,
     pub chatter: Option<Chatter>,
+    rotation: f32,
 }
 
 impl GameObject {
@@ -44,6 +45,7 @@ impl GameObject {
             birth_time: Instant::now(),
             collidable,
             chatter,
+            rotation: 0.0,
         }
     }
 
@@ -61,6 +63,7 @@ impl GameObject {
                 GRAVITY_FORCE,
                 context,
                 collidable_game_objects,
+                &mut self.rotation,
             )?;
         }
 
@@ -73,7 +76,11 @@ impl GameObject {
 
     pub fn draw(&self, context: &mut Context) -> GameResult<()> {
         if let Some(draw_system) = &self.draw_system {
-            draw_system.draw(context, Point2::new(self.location.x, self.location.y))?;
+            draw_system.draw(
+                context,
+                Point2::new(self.location.x, self.location.y),
+                &self.rotation,
+            )?;
         }
 
         return Ok(());
@@ -98,6 +105,7 @@ impl Clone for GameObject {
             live_for: None,
             collidable: self.collidable,
             chatter: self.chatter.clone(),
+            rotation: self.rotation.clone(),
         }
     }
 }
