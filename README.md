@@ -30,9 +30,13 @@ get_the_streamer_game
   - [x] Add a timer
   - [x] If the streamer lives as long as the timer, display win message
   - [x] Fix bad performance around countdown timer
-- [ ] Create a second entity that chat can spawn
-  - [ ] spin the sword (look at offset [@ootsby])
+- [x] Create a second entity that chat can spawn
+  - [x] spin the sword (look at offset [@ootsby])
+- [ ] Send a message to chat as soon as the game starts
+- [ ] Implement a life system, so that I can be hit n times before game over
 - Refactor
+  - [ ] have is_alive be unique per type of game object
+  - [ ] have swords dissapear after 7 bounces
   - [ ] Create command data struct
   - [ ] abstract redundant command creation code into a function
   - [ ] abstract redundant entity creation code into a function
@@ -63,5 +67,7 @@ get_the_streamer_game
   - [ ] Compile for Linux
 - [ ] Feature Requests
   - [ ] Blink the teammates names in the game over screen (Chantillycake)
+  - [ ] Create AI that plays for me (@LordMZTE)
+    - [ ] Game auto-restarts after winning
 - [ ] Maybe if we have performance issues
   - [ ] Load and store sprites in a data structure to get references later

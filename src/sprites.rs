@@ -68,8 +68,12 @@ impl Sprite {
             &self.image,
             DrawParam::new()
                 .src(self.individual_sprite_rects[self.rect_index])
-                .dest(location)
+                .dest(Point2::new(
+                    location.x + (self.width * scale_by / 2.0),
+                    location.y + (self.height * scale_by / 2.0),
+                ))
                 .scale([scale_by, scale_by])
+                .offset(Point2::new(0.5, 0.5))
                 .rotation(*rotation),
         )
     }

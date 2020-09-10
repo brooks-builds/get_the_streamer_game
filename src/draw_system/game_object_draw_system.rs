@@ -61,14 +61,14 @@ impl DrawSystem for GameObjectDrawSystem {
                 )),
             )?;
         }
-        let border = MeshBuilder::new()
-            .rectangle(
-                DrawMode::stroke(2.0),
-                Rect::new(location.x, location.y, size.0, size.1),
-                Color::new(1.0, 0.0, 0.0, 1.0),
-            )
-            .build(context)?;
-        graphics::draw(context, &border, DrawParam::new())?;
+        // let border = MeshBuilder::new()
+        //     .rectangle(
+        //         DrawMode::stroke(2.0),
+        //         Rect::new(location.x, location.y, size.0, size.1),
+        //         Color::new(1.0, 0.0, 0.0, 1.0),
+        //     )
+        //     .build(context)?;
+        // graphics::draw(context, &border, DrawParam::new())?;
 
         Ok(())
     }

@@ -2,6 +2,7 @@ use super::PhysicsSystem;
 use crate::GameObject;
 use eyre::Result;
 use ggez::graphics::Rect;
+use ggez::nalgebra::Vector2;
 use ggez::Context;
 use rand::prelude::*;
 
@@ -22,6 +23,10 @@ impl SwordPhysics {
     fn is_first_fall(&self) -> bool {
         self.velocity_x == 0.0
     }
+
+    fn calculate_rotation(&self) -> f32 {
+        self.velocity_y.atan2(self.velocity_x) + std::f32::consts::PI * 0.25
+    }
 }
 
 impl PhysicsSystem for SwordPhysics {
@@ -37,7 +42,7 @@ impl PhysicsSystem for SwordPhysics {
         self.velocity_y += gravity_force;
         location.y += self.velocity_y;
         location.x += self.velocity_x;
-        *rotation += self.velocity_x;
+        *rotation = self.calculate_rotation();
         if location.y + location.h > screen_size.1 {
             location.y = screen_size.1 - location.h;
             self.velocity_y *= -0.9;

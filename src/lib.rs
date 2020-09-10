@@ -20,7 +20,7 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::time::Duration;
 use twitch_chat_wrapper::chat_message::ChatMessage;
 
-const GAME_TIME: Duration = Duration::from_secs(500);
+const GAME_TIME: Duration = Duration::from_secs(120);
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -39,6 +39,7 @@ impl GameState {
         receive_from_chat: Receiver<ChatMessage>,
         context: &mut Context,
     ) -> GameResult<GameState> {
+        send_to_chat.send("Chat vs. Streamer game started! Use the commands on screen to drop objects that the streamer will attempt to avoid".to_owned()).unwrap();
         let screen_size = graphics::drawable_size(context);
         let mut interface = Interface::new(context, screen_size)?;
         let framerate_target = 60;
@@ -184,7 +185,7 @@ impl GameState {
                         sword_size.0,
                         sword_size.1,
                         Some(Box::new(sword_physics)),
-                        None,
+                        Some(Duration::from_secs(20)),
                         true,
                         Some(chatter.clone()),
                     );
@@ -267,7 +268,9 @@ impl EventHandler for GameState {
                 .retain(|game_object| game_object.is_alive());
 
             if let Ok(chatter_name) = self.player_hit_object_event.try_recv() {
+                let message_to_chat = format!("The game is over, @{} won!", &chatter_name.name);
                 self.winning_player = Some(chatter_name);
+                self.send_to_chat.send(message_to_chat).unwrap();
             }
 
             if let Err(error) = self.interface.update(context) {
