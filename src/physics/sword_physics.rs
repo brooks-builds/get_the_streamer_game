@@ -2,9 +2,7 @@ use super::PhysicsSystem;
 use crate::GameObject;
 use eyre::Result;
 use ggez::graphics::Rect;
-use ggez::nalgebra::Vector2;
 use ggez::Context;
-use rand::prelude::*;
 
 #[derive(Debug)]
 pub struct SwordPhysics {
@@ -35,8 +33,8 @@ impl PhysicsSystem for SwordPhysics {
         location: &mut Rect,
         screen_size: (f32, f32),
         gravity_force: f32,
-        context: &mut Context,
-        collidable_game_objects: &Vec<GameObject>,
+        _context: &mut Context,
+        _collidable_game_objects: &Vec<GameObject>,
         rotation: &mut f32,
     ) -> Result<()> {
         self.velocity_y += gravity_force;

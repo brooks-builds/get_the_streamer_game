@@ -1,6 +1,7 @@
 use ggez::graphics::{DrawParam, Image, Rect};
 use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
+use graphics::Color;
 use std::time::Duration;
 
 #[derive(Debug)]
@@ -62,7 +63,9 @@ impl Sprite {
         location: Point2<f32>,
         scale_by: f32,
         rotation: &f32,
+        opacity: Option<f32>,
     ) -> GameResult<()> {
+        let opacity = opacity.unwrap_or(1.0);
         graphics::draw(
             context,
             &self.image,
@@ -74,7 +77,8 @@ impl Sprite {
                 ))
                 .scale([scale_by, scale_by])
                 .offset(Point2::new(0.5, 0.5))
-                .rotation(*rotation),
+                .rotation(*rotation)
+                .color(Color::new(1.0, 1.0, 1.0, opacity)),
         )
     }
     pub fn update(&mut self, time_since_start: std::time::Duration) {

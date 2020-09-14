@@ -1,4 +1,4 @@
-use super::{Chatter, DrawSystem, PhysicsSystem};
+use super::{Chatter, DrawSystem, GameObjectType, PhysicsSystem};
 use eyre::Result;
 use ggez::graphics::Rect;
 use ggez::nalgebra::Point2;
@@ -17,6 +17,7 @@ pub struct GameObject {
     pub collidable: bool,
     pub chatter: Option<Chatter>,
     rotation: f32,
+    pub my_type: GameObjectType,
 }
 
 impl GameObject {
@@ -30,6 +31,7 @@ impl GameObject {
         live_for: Option<Duration>,
         collidable: bool,
         chatter: Option<Chatter>,
+        my_type: GameObjectType,
     ) -> GameObject {
         let _live_until = if let Some(live_for) = live_for {
             Some(Instant::now() + live_for)
@@ -46,6 +48,7 @@ impl GameObject {
             collidable,
             chatter,
             rotation: 0.0,
+            my_type,
         }
     }
 
@@ -74,12 +77,13 @@ impl GameObject {
         Ok(())
     }
 
-    pub fn draw(&self, context: &mut Context) -> GameResult<()> {
+    pub fn draw(&self, context: &mut Context, iframes: bool) -> GameResult<()> {
         if let Some(draw_system) = &self.draw_system {
             draw_system.draw(
                 context,
                 Point2::new(self.location.x, self.location.y),
                 &self.rotation,
+                iframes,
             )?;
         }
 
@@ -106,6 +110,7 @@ impl Clone for GameObject {
             collidable: self.collidable,
             chatter: self.chatter.clone(),
             rotation: self.rotation.clone(),
+            my_type: self.my_type.clone(),
         }
     }
 }

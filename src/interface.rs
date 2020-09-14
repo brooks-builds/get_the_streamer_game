@@ -292,7 +292,7 @@ impl Interface {
     fn draw_game_objects(&self, context: &mut Context) -> GameResult<()> {
         self.game_objects
             .iter()
-            .try_for_each(|game_object| game_object.draw(context))
+            .try_for_each(|game_object| game_object.draw(context, false))
     }
 
     pub fn add_game_object(&mut self, game_object: GameObject) {

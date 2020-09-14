@@ -2,6 +2,7 @@ mod chatter;
 mod command;
 mod draw_system;
 mod game_object;
+mod game_object_type;
 mod interface;
 mod physics;
 mod sprites;
@@ -10,6 +11,7 @@ use chatter::Chatter;
 use command::Command;
 use draw_system::{DrawSystem, GameObjectDrawSystem, TimerDrawSystem};
 use game_object::GameObject;
+use game_object_type::GameObjectType;
 use ggez::event::EventHandler;
 use ggez::graphics::BLACK;
 use ggez::{graphics, timer, Context, GameResult};
@@ -21,6 +23,7 @@ use std::time::Duration;
 use twitch_chat_wrapper::chat_message::ChatMessage;
 
 const GAME_TIME: Duration = Duration::from_secs(120);
+const MAX_IFRAMES: u8 = 120;
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -31,6 +34,8 @@ pub struct GameState {
     player_hit_object_event: Receiver<Chatter>,
     winning_player: Option<Chatter>,
     teammates: Vec<Chatter>,
+    lives_left: u8,
+    damage_cooldown: u8,
 }
 
 impl GameState {
@@ -59,6 +64,7 @@ impl GameState {
             None,
             false,
             None,
+            GameObjectType::Interface,
         );
 
         // create sword instruction
@@ -76,6 +82,7 @@ impl GameState {
             None,
             false,
             None,
+            GameObjectType::Interface,
         );
 
         interface.add_game_object(sword_game_object);
@@ -95,6 +102,7 @@ impl GameState {
             None,
             false,
             None,
+            GameObjectType::Interface,
         );
         interface.add_game_object(timer_game_object);
 
@@ -115,6 +123,7 @@ impl GameState {
             None,
             false,
             None,
+            GameObjectType::Player,
         );
 
         let game_objects = vec![player];
@@ -129,6 +138,8 @@ impl GameState {
             winning_player: None,
             player_hit_object_event: receive_player_hit_object_event,
             teammates: vec![],
+            lives_left: 3,
+            damage_cooldown: 0,
         })
     }
 
@@ -160,6 +171,7 @@ impl GameState {
                         Some(Duration::from_secs(6)),
                         true,
                         Some(chatter.clone()),
+                        GameObjectType::Enemy,
                     );
 
                     self.game_objects.push(flame_game_object);
@@ -188,6 +200,7 @@ impl GameState {
                         Some(Duration::from_secs(20)),
                         true,
                         Some(chatter.clone()),
+                        GameObjectType::Enemy,
                     );
 
                     self.game_objects.push(sword_game_object);
@@ -268,13 +281,28 @@ impl EventHandler for GameState {
                 .retain(|game_object| game_object.is_alive());
 
             if let Ok(chatter_name) = self.player_hit_object_event.try_recv() {
-                let message_to_chat = format!("The game is over, @{} won!", &chatter_name.name);
-                self.winning_player = Some(chatter_name);
-                self.send_to_chat.send(message_to_chat).unwrap();
+                // we got hit, so lose a life
+                if self.damage_cooldown == 0 {
+                    self.lives_left -= 1;
+                    self.damage_cooldown = MAX_IFRAMES;
+                    let message_to_chat = format!(
+                        "The streamer was hit by {}. The player has {} lives left",
+                        &chatter_name.name, &self.lives_left
+                    );
+                    self.send_to_chat.send(message_to_chat).unwrap();
+
+                    if self.lives_left == 0 {
+                        self.winning_player = Some(chatter_name);
+                    }
+                }
             }
 
             if let Err(error) = self.interface.update(context) {
                 eprintln!("Error updating game objects in interface: {}", error);
+            }
+
+            if self.damage_cooldown > 0 {
+                self.damage_cooldown -= 1;
             }
         }
         Ok(())
@@ -286,7 +314,9 @@ impl EventHandler for GameState {
         let screen_size = graphics::drawable_size(context);
 
         for game_object in self.game_objects.iter() {
-            game_object.draw(context)?;
+            let iframes_active =
+                GameObjectType::Player == game_object.my_type && self.damage_cooldown > 0;
+            game_object.draw(context, iframes_active)?;
         }
 
         self.interface.draw(

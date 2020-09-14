@@ -32,8 +32,8 @@ get_the_streamer_game
   - [x] Fix bad performance around countdown timer
 - [x] Create a second entity that chat can spawn
   - [x] spin the sword (look at offset [@ootsby])
-- [ ] Send a message to chat as soon as the game starts
-- [ ] Implement a life system, so that I can be hit n times before game over
+- [x] Send a message to chat as soon as the game starts
+- [x] Implement a life system, so that I can be hit n times before game over
 - Refactor
   - [ ] have is_alive be unique per type of game object
   - [ ] have swords dissapear after 7 bounces
