@@ -24,5 +24,5 @@ where
         context: &mut Context,
         collidable_game_objects: &Vec<GameObject>,
         rotation: &mut f32,
-    ) -> Result<()>;
+    ) -> Result<bool>;
 }

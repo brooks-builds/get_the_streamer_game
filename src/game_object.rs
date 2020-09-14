@@ -1,4 +1,4 @@
-use super::{Chatter, DrawSystem, GameObjectType, PhysicsSystem};
+use super::{Chatter, DrawSystem, GameObjectType, LifeSystem, PhysicsSystem};
 use eyre::Result;
 use ggez::graphics::Rect;
 use ggez::nalgebra::Point2;
@@ -12,8 +12,10 @@ pub struct GameObject {
     pub location: Rect,
     draw_system: Option<Box<dyn DrawSystem>>,
     physics_system: Option<Box<dyn PhysicsSystem>>,
-    birth_time: Instant,
-    live_for: Option<Duration>,
+    // birth_time: Instant,
+    // live_for: Option<Duration>,
+    // life_left: u8,
+    life_system: Option<Box<dyn LifeSystem>>,
     pub collidable: bool,
     pub chatter: Option<Chatter>,
     rotation: f32,
@@ -28,23 +30,16 @@ impl GameObject {
         width: f32,
         height: f32,
         physics_system: Option<Box<dyn PhysicsSystem>>,
-        live_for: Option<Duration>,
         collidable: bool,
         chatter: Option<Chatter>,
         my_type: GameObjectType,
+        life_system: Option<Box<dyn LifeSystem>>,
     ) -> GameObject {
-        let _live_until = if let Some(live_for) = live_for {
-            Some(Instant::now() + live_for)
-        } else {
-            None
-        };
-
         GameObject {
             location: Rect::new(x, y, width, height),
             draw_system,
             physics_system,
-            live_for,
-            birth_time: Instant::now(),
+            life_system,
             collidable,
             chatter,
             rotation: 0.0,
@@ -67,6 +62,7 @@ impl GameObject {
                 context,
                 collidable_game_objects,
                 &mut self.rotation,
+                &mut self.life_system,
             )?;
         }
 
@@ -89,14 +85,6 @@ impl GameObject {
 
         return Ok(());
     }
-
-    pub fn is_alive(&self) -> bool {
-        if let Some(live_for) = self.live_for {
-            self.birth_time.elapsed() < live_for
-        } else {
-            true
-        }
-    }
 }
 
 impl Clone for GameObject {
@@ -105,12 +93,11 @@ impl Clone for GameObject {
             location: self.location.clone(),
             draw_system: None,
             physics_system: None,
-            birth_time: self.birth_time,
-            live_for: None,
             collidable: self.collidable,
             chatter: self.chatter.clone(),
             rotation: self.rotation.clone(),
             my_type: self.my_type.clone(),
+            life_system: None,
         }
     }
 }

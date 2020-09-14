@@ -28,9 +28,9 @@ impl PhysicsSystem for TimerPhysicsSystem {
         _context: &mut Context,
         _collidable_game_objects: &Vec<GameObject>,
         _rotation: &mut f32,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         location.y += self.velocity_y;
 
-        Ok(())
+        Ok(false)
     }
 }

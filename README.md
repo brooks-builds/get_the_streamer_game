@@ -36,6 +36,10 @@ get_the_streamer_game
 - [x] Implement a life system, so that I can be hit n times before game over
 - Refactor
   - [ ] have is_alive be unique per type of game object
+    - [ ] Creating life system for game objects
+    - [ ] Create Player life system
+    - [ ] Create Fire life system
+    - [ ] Create Sword life system
   - [ ] have swords dissapear after 7 bounces
   - [ ] Create command data struct
   - [ ] abstract redundant command creation code into a function

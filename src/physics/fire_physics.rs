@@ -28,7 +28,7 @@ impl PhysicsSystem for FirePhysics {
         _context: &mut Context,
         _collidable_game_objects: &Vec<GameObject>,
         _rotation: &mut f32,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         if self.affected_by_gravity {
             self.velocity.y += gravity_force;
         }
@@ -42,6 +42,6 @@ impl PhysicsSystem for FirePhysics {
             location.y = screen_height.1 - location.h;
         }
 
-        Ok(())
+        Ok(false)
     }
 }

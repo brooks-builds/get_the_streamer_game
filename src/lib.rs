@@ -4,6 +4,7 @@ mod draw_system;
 mod game_object;
 mod game_object_type;
 mod interface;
+mod life_system;
 mod physics;
 mod sprites;
 
@@ -16,6 +17,7 @@ use ggez::event::EventHandler;
 use ggez::graphics::BLACK;
 use ggez::{graphics, timer, Context, GameResult};
 use interface::Interface;
+use life_system::LifeSystem;
 use physics::{FirePhysics, PhysicsSystem, PlayerPhysics, SwordPhysics, TimerPhysicsSystem};
 use sprites::Sprite;
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -65,6 +67,7 @@ impl GameState {
             false,
             None,
             GameObjectType::Interface,
+            1,
         );
 
         // create sword instruction
@@ -83,6 +86,7 @@ impl GameState {
             false,
             None,
             GameObjectType::Interface,
+            1,
         );
 
         interface.add_game_object(sword_game_object);
@@ -103,6 +107,7 @@ impl GameState {
             false,
             None,
             GameObjectType::Interface,
+            1,
         );
         interface.add_game_object(timer_game_object);
 
@@ -124,6 +129,7 @@ impl GameState {
             false,
             None,
             GameObjectType::Player,
+            3,
         );
 
         let game_objects = vec![player];

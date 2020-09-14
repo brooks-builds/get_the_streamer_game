@@ -36,11 +36,12 @@ impl PhysicsSystem for SwordPhysics {
         _context: &mut Context,
         _collidable_game_objects: &Vec<GameObject>,
         rotation: &mut f32,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         self.velocity_y += gravity_force;
         location.y += self.velocity_y;
         location.x += self.velocity_x;
         *rotation = self.calculate_rotation();
+        let mut bounced = false;
         if location.y + location.h > screen_size.1 {
             location.y = screen_size.1 - location.h;
             self.velocity_y *= -0.9;
@@ -48,6 +49,8 @@ impl PhysicsSystem for SwordPhysics {
             if self.is_first_fall() {
                 self.velocity_x = rand::random::<f32>() * 15.0;
             }
+
+            bounced = true;
         }
 
         if location.x < 0.0 {
@@ -57,6 +60,6 @@ impl PhysicsSystem for SwordPhysics {
             location.x = screen_size.0 - location.w;
             self.velocity_x *= -1.0;
         }
-        Ok(())
+        Ok(bounced)
     }
 }

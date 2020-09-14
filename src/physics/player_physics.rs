@@ -81,7 +81,7 @@ impl PhysicsSystem for PlayerPhysics {
         context: &mut Context,
         collidable_game_objects: &Vec<GameObject>,
         _rotation: &mut f32,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         self.handle_input(context);
         self.stay_in_arena(location, arena);
 
@@ -106,6 +106,6 @@ impl PhysicsSystem for PlayerPhysics {
             self.velocity.x += speed_decrease
         }
 
-        Ok(())
+        Ok(false)
     }
 }
