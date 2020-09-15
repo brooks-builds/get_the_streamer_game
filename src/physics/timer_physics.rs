@@ -1,3 +1,5 @@
+use crate::life_system::LifeSystem;
+
 use super::{GameObject, PhysicsSystem};
 use eyre::Result;
 use ggez::graphics::Rect;
@@ -28,9 +30,10 @@ impl PhysicsSystem for TimerPhysicsSystem {
         _context: &mut Context,
         _collidable_game_objects: &Vec<GameObject>,
         _rotation: &mut f32,
-    ) -> Result<bool> {
+        life_system: &mut Option<Box<dyn LifeSystem>>,
+    ) -> Result<()> {
         location.y += self.velocity_y;
 
-        Ok(false)
+        Ok(())
     }
 }

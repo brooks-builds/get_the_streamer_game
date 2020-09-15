@@ -1,3 +1,5 @@
+use crate::life_system::LifeSystem;
+
 use super::{GameObject, PhysicsSystem};
 use eyre::Result;
 use ggez::graphics::Rect;
@@ -28,7 +30,8 @@ impl PhysicsSystem for FirePhysics {
         _context: &mut Context,
         _collidable_game_objects: &Vec<GameObject>,
         _rotation: &mut f32,
-    ) -> Result<bool> {
+        life_system: &mut Option<Box<dyn LifeSystem>>,
+    ) -> Result<()> {
         if self.affected_by_gravity {
             self.velocity.y += gravity_force;
         }
@@ -42,6 +45,6 @@ impl PhysicsSystem for FirePhysics {
             location.y = screen_height.1 - location.h;
         }
 
-        Ok(false)
+        Ok(())
     }
 }

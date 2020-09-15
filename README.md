@@ -35,12 +35,12 @@ get_the_streamer_game
 - [x] Send a message to chat as soon as the game starts
 - [x] Implement a life system, so that I can be hit n times before game over
 - Refactor
-  - [ ] have is_alive be unique per type of game object
-    - [ ] Creating life system for game objects
-    - [ ] Create Player life system
-    - [ ] Create Fire life system
-    - [ ] Create Sword life system
-  - [ ] have swords dissapear after 7 bounces
+  - [x] have is_alive be unique per type of game object
+    - [x] Creating life system for game objects
+    - [x] Create Player life system
+    - [x] Create Fire life system
+    - [x] Create Sword life system
+  - [x] have swords dissapear after 7 bounces
   - [ ] Create command data struct
   - [ ] abstract redundant command creation code into a function
   - [ ] abstract redundant entity creation code into a function

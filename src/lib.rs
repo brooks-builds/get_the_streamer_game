@@ -17,7 +17,7 @@ use ggez::event::EventHandler;
 use ggez::graphics::BLACK;
 use ggez::{graphics, timer, Context, GameResult};
 use interface::Interface;
-use life_system::LifeSystem;
+use life_system::{FireLifeSystem, LifeSystem, PlayerLifeSystem, SwordLifeSystem};
 use physics::{FirePhysics, PhysicsSystem, PlayerPhysics, SwordPhysics, TimerPhysicsSystem};
 use sprites::Sprite;
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -63,11 +63,10 @@ impl GameState {
             flame_size.0,
             flame_size.1,
             None,
-            None,
             false,
             None,
             GameObjectType::Interface,
-            1,
+            None,
         );
 
         // create sword instruction
@@ -82,11 +81,10 @@ impl GameState {
             sword_size.0,
             sword_size.1,
             None,
-            None,
             false,
             None,
             GameObjectType::Interface,
-            1,
+            None,
         );
 
         interface.add_game_object(sword_game_object);
@@ -103,11 +101,10 @@ impl GameState {
             timer_size.0,
             timer_size.1,
             Some(Box::new(timer_physics_system)),
-            None,
             false,
             None,
             GameObjectType::Interface,
-            1,
+            None,
         );
         interface.add_game_object(timer_game_object);
 
@@ -125,11 +122,10 @@ impl GameState {
             player_size.0,
             player_size.1,
             Some(Box::new(player_physics_system)),
-            None,
             false,
             None,
             GameObjectType::Player,
-            3,
+            Some(Box::new(PlayerLifeSystem::new())),
         );
 
         let game_objects = vec![player];
@@ -174,10 +170,10 @@ impl GameState {
                         flame_size.0,
                         flame_size.1,
                         Some(Box::new(physics_system)),
-                        Some(Duration::from_secs(6)),
                         true,
                         Some(chatter.clone()),
                         GameObjectType::Enemy,
+                        Some(Box::new(FireLifeSystem::new())),
                     );
 
                     self.game_objects.push(flame_game_object);
@@ -203,10 +199,10 @@ impl GameState {
                         sword_size.0,
                         sword_size.1,
                         Some(Box::new(sword_physics)),
-                        Some(Duration::from_secs(20)),
                         true,
                         Some(chatter.clone()),
                         GameObjectType::Enemy,
+                        Some(Box::new(SwordLifeSystem::new())),
                     );
 
                     self.game_objects.push(sword_game_object);

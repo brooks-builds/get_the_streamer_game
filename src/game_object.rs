@@ -12,9 +12,6 @@ pub struct GameObject {
     pub location: Rect,
     draw_system: Option<Box<dyn DrawSystem>>,
     physics_system: Option<Box<dyn PhysicsSystem>>,
-    // birth_time: Instant,
-    // live_for: Option<Duration>,
-    // life_left: u8,
     life_system: Option<Box<dyn LifeSystem>>,
     pub collidable: bool,
     pub chatter: Option<Chatter>,
@@ -70,6 +67,10 @@ impl GameObject {
             draw_system.update(time_since_start);
         }
 
+        if let Some(life_system) = &mut self.life_system {
+            life_system.update();
+        }
+
         Ok(())
     }
 
@@ -84,6 +85,14 @@ impl GameObject {
         }
 
         return Ok(());
+    }
+
+    pub fn is_alive(&self) -> bool {
+        if let Some(life_system) = &self.life_system {
+            life_system.is_alive()
+        } else {
+            true
+        }
     }
 }
 

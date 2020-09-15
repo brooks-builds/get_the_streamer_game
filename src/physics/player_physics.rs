@@ -1,3 +1,5 @@
+use crate::life_system::LifeSystem;
+
 use super::{Chatter, GameObject, PhysicsSystem};
 use eyre::Result;
 use ggez::graphics::Rect;
@@ -81,7 +83,8 @@ impl PhysicsSystem for PlayerPhysics {
         context: &mut Context,
         collidable_game_objects: &Vec<GameObject>,
         _rotation: &mut f32,
-    ) -> Result<bool> {
+        life_system: &mut Option<Box<dyn LifeSystem>>,
+    ) -> Result<()> {
         self.handle_input(context);
         self.stay_in_arena(location, arena);
 
@@ -92,6 +95,10 @@ impl PhysicsSystem for PlayerPhysics {
                 Chatter::new(DEFAULT_CHATTER_NAME.to_owned(), (255, 255, 255))
             };
             self.player_hit_object.send(chatter)?;
+
+            if let Some(player_life_system) = life_system.as_deref_mut() {
+                player_life_system.hit();
+            }
         }
 
         if self.affected_by_gravity {
@@ -106,6 +113,6 @@ impl PhysicsSystem for PlayerPhysics {
             self.velocity.x += speed_decrease
         }
 
-        Ok(false)
+        Ok(())
     }
 }

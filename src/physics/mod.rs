@@ -3,6 +3,8 @@ mod player_physics;
 mod sword_physics;
 mod timer_physics;
 
+use crate::life_system::LifeSystem;
+
 use super::{Chatter, GameObject};
 use eyre::Result;
 pub use fire_physics::FirePhysics;
@@ -24,5 +26,6 @@ where
         context: &mut Context,
         collidable_game_objects: &Vec<GameObject>,
         rotation: &mut f32,
-    ) -> Result<bool>;
+        life_system: &mut Option<Box<dyn LifeSystem>>,
+    ) -> Result<()>;
 }
