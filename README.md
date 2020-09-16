@@ -34,16 +34,16 @@ get_the_streamer_game
   - [x] spin the sword (look at offset [@ootsby])
 - [x] Send a message to chat as soon as the game starts
 - [x] Implement a life system, so that I can be hit n times before game over
-- Refactor
+- Rewrites
   - [x] have is_alive be unique per type of game object
     - [x] Creating life system for game objects
     - [x] Create Player life system
     - [x] Create Fire life system
     - [x] Create Sword life system
   - [x] have swords dissapear after 7 bounces
-  - [ ] Create command data struct
-  - [ ] abstract redundant command creation code into a function
-  - [ ] abstract redundant entity creation code into a function
+  - [x] Create command data struct
+  - [x] abstract redundant command creation code into a function
+  - [x] abstract redundant entity creation code into a function
 - [ ] Create a third entity that chat can spawn
 - [ ] Create a fourth entity that chat can spawn
 - [ ] Polish
@@ -73,5 +73,7 @@ get_the_streamer_game
   - [ ] Blink the teammates names in the game over screen (Chantillycake)
   - [ ] Create AI that plays for me (@LordMZTE)
     - [ ] Game auto-restarts after winning
+  - [ ] Swords fall out of arena before dissapearing (@LordMZTE)
+  - [ ] Chatter with most hits wins (@LordMZTE)
 - [ ] Maybe if we have performance issues
   - [ ] Load and store sprites in a data structure to get references later

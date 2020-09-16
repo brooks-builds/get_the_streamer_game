@@ -51,43 +51,25 @@ impl GameState {
         let mut interface = Interface::new(context, screen_size)?;
         let framerate_target = 60;
 
-        // create flame instruction
-        let fire_sprite = Sprite::new(context, "/LargeFlame.png", 4, 1)?;
-        let flame_draw_system =
-            GameObjectDrawSystem::new(Some(fire_sprite), Some("#fire <column>"), 1.5);
-        let flame_size = flame_draw_system.get_size().unwrap_or((50.0, 50.0));
-        let flame_game_object = GameObject::new(
-            interface.location.x + interface.location.w / 2.0 - flame_size.0 / 2.0,
+        Self::create_instruction(
+            &mut interface,
+            context,
+            "/LargeFlame.png",
+            (4, 1),
+            "#fire <column>",
+            1.5,
             200.0,
-            Some(Box::new(flame_draw_system)),
-            flame_size.0,
-            flame_size.1,
-            None,
-            false,
-            None,
-            GameObjectType::Interface,
-            None,
-        );
+        )?;
 
-        // create sword instruction
-        let sword_sprite = Sprite::new(context, "/item1BIT_sword.png", 1, 1)?;
-        let sword_draw_system =
-            GameObjectDrawSystem::new(Some(sword_sprite), Some("#sword <column>"), 2.5);
-        let sword_size = sword_draw_system.get_size().unwrap_or((50.0, 50.0));
-        let sword_game_object = GameObject::new(
-            interface.location.x + interface.location.w / 2.0 - sword_size.0 / 2.0,
-            350.0,
-            Some(Box::new(sword_draw_system)),
-            sword_size.0,
-            sword_size.1,
-            None,
-            false,
-            None,
-            GameObjectType::Interface,
-            None,
-        );
-
-        interface.add_game_object(sword_game_object);
+        Self::create_instruction(
+            &mut interface,
+            context,
+            "/item1BIT_sword.png",
+            (1, 1),
+            "#sword <column>",
+            2.5,
+            275.0,
+        )?;
 
         // create timer block
         let timer_draw_system = TimerDrawSystem::new(screen_size, context)?;
@@ -129,7 +111,6 @@ impl GameState {
         );
 
         let game_objects = vec![player];
-        interface.add_game_object(flame_game_object);
 
         Ok(GameState {
             send_to_chat,
@@ -151,67 +132,44 @@ impl GameState {
         context: &mut Context,
     ) -> GameResult<()> {
         if let Some(command) = command {
-            match command {
-                Command::Fire {
-                    id: column,
-                    chatter,
-                } => {
-                    let scale = 2.0;
-                    let drop_zone_location = self.interface.get_column_coordinates_by_index(column);
-                    let fire_sprite = Sprite::new(context, "/LargeFlame.png", 4, 1)?;
-                    let flame_draw_system =
-                        GameObjectDrawSystem::new(Some(fire_sprite), None, scale);
-                    let flame_size = flame_draw_system.get_size().unwrap_or((50.0, 50.0));
-                    let physics_system = FirePhysics::new();
-                    let flame_game_object = GameObject::new(
-                        drop_zone_location.x - flame_size.0 / 2.0,
-                        drop_zone_location.y - flame_size.1 / 2.0,
-                        Some(Box::new(flame_draw_system)),
-                        flame_size.0,
-                        flame_size.1,
-                        Some(Box::new(physics_system)),
-                        true,
-                        Some(chatter.clone()),
-                        GameObjectType::Enemy,
-                        Some(Box::new(FireLifeSystem::new())),
-                    );
-
-                    self.game_objects.push(flame_game_object);
-                    if !self.teammates.contains(&chatter) {
-                        self.teammates.push(chatter);
-                    }
-                }
-                Command::Sword {
-                    id: column,
-                    chatter,
-                } => {
-                    let scale = 3.0;
-                    let drop_zone_location = self.interface.get_column_coordinates_by_index(column);
-                    let sword_sprite = Sprite::new(context, "/item1BIT_sword.png", 1, 1)?;
-                    let sword_draw_system =
-                        GameObjectDrawSystem::new(Some(sword_sprite), None, scale);
-                    let sword_size = sword_draw_system.get_size().unwrap_or((50.0, 50.0));
-                    let sword_physics = SwordPhysics::new();
-                    let sword_game_object = GameObject::new(
-                        drop_zone_location.x - sword_size.0 / 2.0,
-                        drop_zone_location.y - sword_size.1 / 2.0,
-                        Some(Box::new(sword_draw_system)),
-                        sword_size.0,
-                        sword_size.1,
-                        Some(Box::new(sword_physics)),
-                        true,
-                        Some(chatter.clone()),
-                        GameObjectType::Enemy,
-                        Some(Box::new(SwordLifeSystem::new())),
-                    );
-
-                    self.game_objects.push(sword_game_object);
-                    if !self.teammates.contains(&chatter) {
-                        self.teammates.push(chatter);
-                    }
-                }
+            let chatter = command.chatter.clone();
+            self.game_objects.push(command.handle(
+                self.interface.get_column_coordinates_by_index(command.id),
+                context,
+            )?);
+            if !self.teammates.contains(&chatter) {
+                self.teammates.push(chatter);
             }
         }
+        Ok(())
+    }
+
+    fn create_instruction(
+        interface: &mut Interface,
+        context: &mut Context,
+        sprite_path: &'static str,
+        sprite_count: (u16, u16),
+        label: &'static str,
+        scale_by: f32,
+        y: f32,
+    ) -> GameResult<()> {
+        let sprite = Sprite::new(context, sprite_path, sprite_count.0, sprite_count.1)?;
+        let draw_system = GameObjectDrawSystem::new(Some(sprite), Some(label), scale_by);
+        let size = draw_system.get_size().unwrap_or((50.0, 50.0));
+        let game_object = GameObject::new(
+            interface.location.x + interface.location.w / 2.0 - size.0 / 2.0,
+            y,
+            Some(Box::new(draw_system)),
+            size.0,
+            size.1,
+            None,
+            false,
+            None,
+            GameObjectType::Interface,
+            None,
+        );
+
+        interface.add_game_object(game_object);
 
         Ok(())
     }
