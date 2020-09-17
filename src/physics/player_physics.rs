@@ -1,4 +1,4 @@
-use crate::life_system::LifeSystem;
+use crate::{game_object_type::GameObjectType, life_system::LifeSystem};
 
 use super::{Chatter, GameObject, PhysicsSystem};
 use eyre::Result;
@@ -66,7 +66,9 @@ impl PlayerPhysics {
         location: &Rect,
     ) -> Option<GameObject> {
         for other_game_object in collidable_game_objects {
-            if other_game_object.location.overlaps(location) {
+            if other_game_object.location.overlaps(location)
+                && other_game_object.my_type != GameObjectType::Player
+            {
                 return Some(other_game_object.clone());
             }
         }

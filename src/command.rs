@@ -4,8 +4,8 @@ use rand::prelude::*;
 use crate::{
     draw_system::DrawSystem, draw_system::GameObjectDrawSystem, game_object::GameObject,
     game_object_type::GameObjectType, life_system::FireLifeSystem, life_system::LifeSystem,
-    life_system::SwordLifeSystem, physics::FirePhysics, physics::PhysicsSystem,
-    physics::SwordPhysics, sprites::Sprite,
+    life_system::SnakeLifeSystem, life_system::SwordLifeSystem, physics::FirePhysics,
+    physics::PhysicsSystem, physics::SnakePhysics, physics::SwordPhysics, sprites::Sprite,
 };
 
 use super::Chatter;
@@ -33,6 +33,11 @@ impl Command {
                 })),
                 "#sword" => Ok(Some(Command {
                     command_type: CommandType::Sword,
+                    id,
+                    chatter,
+                })),
+                "#snake" => Ok(Some(Command {
+                    command_type: CommandType::Snake,
                     id,
                     chatter,
                 })),
@@ -84,6 +89,7 @@ impl Command {
         match self.command_type {
             CommandType::Fire => 2.0,
             CommandType::Sword => 3.0,
+            CommandType::Snake => 3.0,
         }
     }
 
@@ -91,6 +97,7 @@ impl Command {
         match self.command_type {
             CommandType::Fire => Sprite::new(context, "/LargeFlame.png", 4, 1),
             CommandType::Sword => Sprite::new(context, "/item1BIT_sword.png", 1, 1),
+            CommandType::Snake => Sprite::new(context, "/snake.png", 4, 1),
         }
     }
 
@@ -98,6 +105,7 @@ impl Command {
         match self.command_type {
             CommandType::Fire => Box::new(FirePhysics::new()),
             CommandType::Sword => Box::new(SwordPhysics::new()),
+            CommandType::Snake => Box::new(SnakePhysics::new()),
         }
     }
 
@@ -105,6 +113,7 @@ impl Command {
         match self.command_type {
             CommandType::Fire => Box::new(FireLifeSystem::new()),
             CommandType::Sword => Box::new(SwordLifeSystem::new()),
+            CommandType::Snake => Box::new(SnakeLifeSystem::new()),
         }
     }
 }
@@ -113,4 +122,5 @@ impl Command {
 pub enum CommandType {
     Fire,
     Sword,
+    Snake,
 }

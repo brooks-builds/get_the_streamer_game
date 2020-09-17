@@ -60,6 +60,7 @@ get_the_streamer_game
     - [ ] Victory is Mine!
     - [ ] Who is the Best?
     - [ ] Not today!
+  - [ ] When streamer wins, show list of enemies
 - [ ] Clean up code
   - [ ] Make command.rs nicer
   - [ ] Extracting command in lib/update is not great :(
@@ -75,5 +76,6 @@ get_the_streamer_game
     - [ ] Game auto-restarts after winning
   - [ ] Swords fall out of arena before dissapearing (@LordMZTE)
   - [ ] Chatter with most hits wins (@LordMZTE)
+  - [ ] Player can't change direction in mid-air (@LordMZTE)
 - [ ] Maybe if we have performance issues
   - [ ] Load and store sprites in a data structure to get references later

@@ -17,8 +17,10 @@ use ggez::event::EventHandler;
 use ggez::graphics::BLACK;
 use ggez::{graphics, timer, Context, GameResult};
 use interface::Interface;
-use life_system::{FireLifeSystem, LifeSystem, PlayerLifeSystem, SwordLifeSystem};
-use physics::{FirePhysics, PhysicsSystem, PlayerPhysics, SwordPhysics, TimerPhysicsSystem};
+use life_system::{FireLifeSystem, LifeSystem, PlayerLifeSystem, SnakeLifeSystem, SwordLifeSystem};
+use physics::{
+    FirePhysics, PhysicsSystem, PlayerPhysics, SnakePhysics, SwordPhysics, TimerPhysicsSystem,
+};
 use sprites::Sprite;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::time::Duration;
@@ -68,7 +70,17 @@ impl GameState {
             (1, 1),
             "#sword <column>",
             2.5,
-            275.0,
+            300.0,
+        )?;
+
+        Self::create_instruction(
+            &mut interface,
+            context,
+            "/snake.png",
+            (4, 1),
+            "#snake <column>",
+            2.5,
+            400.0,
         )?;
 
         // create timer block
@@ -104,7 +116,7 @@ impl GameState {
             player_size.0,
             player_size.1,
             Some(Box::new(player_physics_system)),
-            false,
+            true,
             None,
             GameObjectType::Player,
             Some(Box::new(PlayerLifeSystem::new())),
