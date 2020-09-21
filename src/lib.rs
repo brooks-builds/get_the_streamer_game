@@ -81,6 +81,16 @@ impl GameState {
             400.0,
         )?;
 
+        Self::create_instruction(
+            &mut interface,
+            context,
+            "/heart.png",
+            (1, 1),
+            "#heart <column>",
+            1.5,
+            500.0,
+        )?;
+
         // create timer block
         let timer_draw_system = TimerDrawSystem::new(screen_size, context)?;
         let timer_size = timer_draw_system.get_size().unwrap_or((5.0, screen_size.1));
