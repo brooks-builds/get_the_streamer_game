@@ -1,5 +1,7 @@
 use std::time::{Duration, Instant};
 
+use ggez::graphics::Rect;
+
 use super::LifeSystem;
 
 #[derive(Debug)]
@@ -24,5 +26,5 @@ impl LifeSystem for FireLifeSystem {
 
     fn hit(&mut self) {}
 
-    fn update(&mut self) {}
+    fn update(&mut self, _screen_size: (f32, f32), _location: &Rect) {}
 }

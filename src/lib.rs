@@ -17,10 +17,8 @@ use ggez::event::EventHandler;
 use ggez::graphics::BLACK;
 use ggez::{graphics, timer, Context, GameResult};
 use interface::Interface;
-use life_system::{FireLifeSystem, LifeSystem, PlayerLifeSystem, SnakeLifeSystem, SwordLifeSystem};
-use physics::{
-    FirePhysics, PhysicsSystem, PlayerPhysics, SnakePhysics, SwordPhysics, TimerPhysicsSystem,
-};
+use life_system::{LifeSystem, PlayerLifeSystem};
+use physics::{PhysicsSystem, PlayerPhysics, TimerPhysicsSystem};
 use sprites::Sprite;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::time::Duration;

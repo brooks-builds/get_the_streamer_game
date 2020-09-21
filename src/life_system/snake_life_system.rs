@@ -1,20 +1,28 @@
+use ggez::graphics::Rect;
+
 use super::LifeSystem;
 
 #[derive(Debug)]
-pub struct SnakeLifeSystem {}
+pub struct SnakeLifeSystem {
+    on_screen: bool,
+}
 
 impl SnakeLifeSystem {
     pub fn new() -> Self {
-        Self {}
+        Self { on_screen: true }
     }
 }
 
 impl LifeSystem for SnakeLifeSystem {
     fn is_alive(&self) -> bool {
-        true
+        self.on_screen
     }
 
     fn hit(&mut self) {}
 
-    fn update(&mut self) {}
+    fn update(&mut self, screen_size: (f32, f32), location: &Rect) {
+        if location.x + location.w < 0.0 || location.x > screen_size.0 {
+            self.on_screen = false;
+        }
+    }
 }

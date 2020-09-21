@@ -30,7 +30,7 @@ impl PhysicsSystem for FirePhysics {
         _context: &mut Context,
         _collidable_game_objects: &Vec<GameObject>,
         _rotation: &mut f32,
-        life_system: &mut Option<Box<dyn LifeSystem>>,
+        _life_system: &mut Option<Box<dyn LifeSystem>>,
     ) -> Result<()> {
         if self.affected_by_gravity {
             self.velocity.y += gravity_force;

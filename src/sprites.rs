@@ -66,6 +66,7 @@ impl Sprite {
         opacity: Option<f32>,
     ) -> GameResult<()> {
         let opacity = opacity.unwrap_or(1.0);
+        let scale_by_y = if *rotation > 3.0 { -scale_by } else { scale_by };
         graphics::draw(
             context,
             &self.image,
@@ -75,7 +76,7 @@ impl Sprite {
                     location.x + (self.width * scale_by / 2.0),
                     location.y + (self.height * scale_by / 2.0),
                 ))
-                .scale([scale_by, scale_by])
+                .scale([scale_by, scale_by_y])
                 .offset(Point2::new(0.5, 0.5))
                 .rotation(*rotation)
                 .color(Color::new(1.0, 1.0, 1.0, opacity)),

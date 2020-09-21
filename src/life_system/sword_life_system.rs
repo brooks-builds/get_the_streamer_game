@@ -1,3 +1,5 @@
+use ggez::graphics::Rect;
+
 use super::LifeSystem;
 
 #[derive(Debug)]
@@ -24,5 +26,5 @@ impl LifeSystem for SwordLifeSystem {
         self.bounces += 1;
     }
 
-    fn update(&mut self) {}
+    fn update(&mut self, _screen_size: (f32, f32), _location: &Rect) {}
 }

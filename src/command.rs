@@ -1,4 +1,4 @@
-use ggez::{nalgebra::Point2, Context, GameError, GameResult};
+use ggez::{nalgebra::Point2, Context, GameResult};
 use rand::prelude::*;
 
 use crate::{

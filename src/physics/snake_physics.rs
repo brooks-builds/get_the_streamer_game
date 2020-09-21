@@ -52,13 +52,14 @@ impl PhysicsSystem for SnakePhysics {
         sprite: &mut Rect,
         screen_size: (f32, f32),
         gravity_force: f32,
-        context: &mut Context,
+        _context: &mut Context,
         collidable_game_objects: &Vec<GameObject>,
         rotation: &mut f32,
-        life_system: &mut Option<Box<dyn LifeSystem>>,
+        _life_system: &mut Option<Box<dyn LifeSystem>>,
     ) -> Result<()> {
         if self.affected_by_gravity {
             self.velocity_y += gravity_force;
+            *rotation = std::f32::consts::FRAC_PI_3 + 0.3;
         }
 
         sprite.y += self.velocity_y;
@@ -73,6 +74,11 @@ impl PhysicsSystem for SnakePhysics {
                 "Snake hit ground, velocity now {}-{}",
                 self.velocity_x, self.velocity_y
             );
+            if self.velocity_x < 0.0 {
+                *rotation = 3.14159;
+            } else {
+                *rotation = 0.0;
+            }
         }
         Ok(())
     }

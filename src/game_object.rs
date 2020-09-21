@@ -3,7 +3,6 @@ use eyre::Result;
 use ggez::graphics::Rect;
 use ggez::nalgebra::Point2;
 use ggez::{Context, GameResult};
-use std::time::{Duration, Instant};
 
 const GRAVITY_FORCE: f32 = 0.3;
 
@@ -68,7 +67,7 @@ impl GameObject {
         }
 
         if let Some(life_system) = &mut self.life_system {
-            life_system.update();
+            life_system.update(screen_size, &self.location);
         }
 
         Ok(())

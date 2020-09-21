@@ -44,7 +44,10 @@ get_the_streamer_game
   - [x] Create command data struct
   - [x] abstract redundant command creation code into a function
   - [x] abstract redundant entity creation code into a function
-- [ ] Create a third entity that chat can spawn
+- [x] Create a third entity that chat can spawn
+  - [x] Rotate snake so it's facing down when falling
+  - [x] Rotate snake to face which direction it's moving
+  - [x] When snake leaves the screen have it die
 - [ ] Create a fourth entity that chat can spawn
 - [ ] Polish
   - [ ] When quitting the app, exit all processes
