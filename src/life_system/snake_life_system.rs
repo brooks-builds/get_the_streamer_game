@@ -25,4 +25,6 @@ impl LifeSystem for SnakeLifeSystem {
             self.on_screen = false;
         }
     }
+
+    fn gain_life(&mut self) {}
 }

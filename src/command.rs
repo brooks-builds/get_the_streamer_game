@@ -3,9 +3,10 @@ use rand::prelude::*;
 
 use crate::{
     draw_system::DrawSystem, draw_system::GameObjectDrawSystem, game_object::GameObject,
-    game_object_type::GameObjectType, life_system::FireLifeSystem, life_system::LifeSystem,
-    life_system::SnakeLifeSystem, life_system::SwordLifeSystem, physics::FirePhysics,
-    physics::PhysicsSystem, physics::SnakePhysics, physics::SwordPhysics, sprites::Sprite,
+    game_object_type::GameObjectType, life_system::FireLifeSystem, life_system::HeartLifeSystem,
+    life_system::LifeSystem, life_system::SnakeLifeSystem, life_system::SwordLifeSystem,
+    physics::FirePhysics, physics::HeartPhysics, physics::PhysicsSystem, physics::SnakePhysics,
+    physics::SwordPhysics, sprites::Sprite,
 };
 
 use super::Chatter;
@@ -38,6 +39,11 @@ impl Command {
                 })),
                 "#snake" => Ok(Some(Command {
                     command_type: CommandType::Snake,
+                    id,
+                    chatter,
+                })),
+                "#heart" => Ok(Some(Command {
+                    command_type: CommandType::Heart,
                     id,
                     chatter,
                 })),
@@ -76,11 +82,11 @@ impl Command {
             Some(Box::new(draw_system)),
             size.0,
             size.1,
-            Some(physics_system),
+            physics_system,
             true,
             Some(self.chatter.clone()),
-            GameObjectType::Enemy,
-            Some(self.get_life_system()),
+            self.get_game_object_type(),
+            self.get_life_system(),
         );
         Ok(game_object)
     }
@@ -90,6 +96,7 @@ impl Command {
             CommandType::Fire => 2.0,
             CommandType::Sword => 3.0,
             CommandType::Snake => 3.0,
+            CommandType::Heart => 1.5,
         }
     }
 
@@ -98,22 +105,32 @@ impl Command {
             CommandType::Fire => Sprite::new(context, "/LargeFlame.png", 4, 1),
             CommandType::Sword => Sprite::new(context, "/item1BIT_sword.png", 1, 1),
             CommandType::Snake => Sprite::new(context, "/snake.png", 4, 1),
+            CommandType::Heart => Sprite::new(context, "/heart.png", 1, 1),
         }
     }
 
-    fn get_physics(&self) -> Box<dyn PhysicsSystem> {
+    fn get_physics(&self) -> Option<Box<dyn PhysicsSystem>> {
         match self.command_type {
-            CommandType::Fire => Box::new(FirePhysics::new()),
-            CommandType::Sword => Box::new(SwordPhysics::new()),
-            CommandType::Snake => Box::new(SnakePhysics::new()),
+            CommandType::Fire => Some(Box::new(FirePhysics::new())),
+            CommandType::Sword => Some(Box::new(SwordPhysics::new())),
+            CommandType::Snake => Some(Box::new(SnakePhysics::new())),
+            CommandType::Heart => Some(Box::new(HeartPhysics::new())),
         }
     }
 
-    fn get_life_system(&self) -> Box<dyn LifeSystem> {
+    fn get_life_system(&self) -> Option<Box<dyn LifeSystem>> {
         match self.command_type {
-            CommandType::Fire => Box::new(FireLifeSystem::new()),
-            CommandType::Sword => Box::new(SwordLifeSystem::new()),
-            CommandType::Snake => Box::new(SnakeLifeSystem::new()),
+            CommandType::Fire => Some(Box::new(FireLifeSystem::new())),
+            CommandType::Sword => Some(Box::new(SwordLifeSystem::new())),
+            CommandType::Snake => Some(Box::new(SnakeLifeSystem::new())),
+            CommandType::Heart => Some(Box::new(HeartLifeSystem::new())),
+        }
+    }
+
+    fn get_game_object_type(&self) -> GameObjectType {
+        match self.command_type {
+            CommandType::Heart => GameObjectType::Heart,
+            _ => GameObjectType::Enemy,
         }
     }
 }
@@ -123,4 +140,5 @@ pub enum CommandType {
     Fire,
     Sword,
     Snake,
+    Heart,
 }

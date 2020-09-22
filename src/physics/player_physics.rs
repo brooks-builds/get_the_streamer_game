@@ -99,7 +99,11 @@ impl PhysicsSystem for PlayerPhysics {
             self.player_hit_object.send(chatter)?;
 
             if let Some(player_life_system) = life_system.as_deref_mut() {
-                player_life_system.hit();
+                if GameObjectType::Heart == game_object.my_type {
+                    player_life_system.gain_life();
+                } else {
+                    player_life_system.hit();
+                }
             }
         }
 

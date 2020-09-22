@@ -25,7 +25,6 @@ use std::time::Duration;
 use twitch_chat_wrapper::chat_message::ChatMessage;
 
 const GAME_TIME: Duration = Duration::from_secs(120);
-const MAX_IFRAMES: u8 = 120;
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -36,7 +35,6 @@ pub struct GameState {
     player_hit_object_event: Receiver<Chatter>,
     winning_player: Option<Chatter>,
     teammates: Vec<Chatter>,
-    lives_left: u8,
     damage_cooldown: u8,
 }
 
@@ -141,7 +139,6 @@ impl GameState {
             winning_player: None,
             player_hit_object_event: receive_player_hit_object_event,
             teammates: vec![],
-            lives_left: 3,
             damage_cooldown: 0,
         })
     }
@@ -260,21 +257,22 @@ impl EventHandler for GameState {
             self.game_objects
                 .retain(|game_object| game_object.is_alive());
 
+            #[cfg(debug_assertions)]
+            println!("game object count: {}", self.game_objects.len());
+
             if let Ok(chatter_name) = self.player_hit_object_event.try_recv() {
                 // we got hit, so lose a life
-                if self.damage_cooldown == 0 {
-                    self.lives_left -= 1;
-                    self.damage_cooldown = MAX_IFRAMES;
-                    let message_to_chat = format!(
-                        "The streamer was hit by {}. The player has {} lives left",
-                        &chatter_name.name, &self.lives_left
-                    );
-                    self.send_to_chat.send(message_to_chat).unwrap();
+                let message_to_chat = format!("The streamer was hit by {}", &chatter_name.name);
+                self.send_to_chat.send(message_to_chat).unwrap();
+            }
 
-                    if self.lives_left == 0 {
-                        self.winning_player = Some(chatter_name);
-                    }
-                }
+            if self
+                .game_objects
+                .iter()
+                .find(|game_object| game_object.my_type == GameObjectType::Player)
+                .is_none()
+            {
+                self.winning_player = Some(Chatter::new("Someone".to_owned(), (50, 25, 200)));
             }
 
             if let Err(error) = self.interface.update(context) {

@@ -49,12 +49,13 @@ get_the_streamer_game
   - [x] Rotate snake to face which direction it's moving
   - [x] When snake leaves the screen have it die
 - [ ] Create a heart entity that chat can spawn
-  - [ ] Create instruction area that shows helping vs attaching streamer
-  - [ ] Have the drop drop to the ground, then stay for 10 seconds
-  - [ ] When the streamer hits the heart, the streamer gains a life
-  - [ ] When the streamer hits the heart, the heart dies
+  - [ ] Create instruction area that shows helping vs attacking streamer
+  - [x] Have the heart drop slowly
+  - [x] When the streamer hits the heart, the streamer gains a life
+  - [x] When the streamer hits the heart, the heart dies
   - [ ] Display streamer lives left in the instruction area
 - [ ] Polish
+  - [ ] Show player iframes by setting opacity low
   - [ ] When quitting the app, exit all processes
   - [ ] Scale up the fire sprite
   - [ ] Cut the player sprites so that we have left run, right run, and stand

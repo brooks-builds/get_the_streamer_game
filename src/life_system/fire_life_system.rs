@@ -27,4 +27,6 @@ impl LifeSystem for FireLifeSystem {
     fn hit(&mut self) {}
 
     fn update(&mut self, _screen_size: (f32, f32), _location: &Rect) {}
+
+    fn gain_life(&mut self) {}
 }

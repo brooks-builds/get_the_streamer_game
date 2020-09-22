@@ -33,5 +33,15 @@ impl LifeSystem for PlayerLifeSystem {
         if self.iframes_left > 0 {
             self.iframes_left -= 1;
         }
+
+        #[cfg(debug_assertions)]
+        println!("player has {} lives left", self.lives);
+    }
+
+    fn gain_life(&mut self) {
+        // #[cfg(debug_assertions)]
+        println!("player gained a life");
+
+        self.lives += 1;
     }
 }

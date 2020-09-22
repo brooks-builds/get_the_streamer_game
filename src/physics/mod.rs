@@ -1,4 +1,5 @@
 pub mod fire_physics;
+mod heart_physics;
 mod player_physics;
 mod snake_physics;
 mod sword_physics;
@@ -11,6 +12,7 @@ use eyre::Result;
 pub use fire_physics::FirePhysics;
 use ggez::graphics::Rect;
 use ggez::Context;
+pub use heart_physics::HeartPhysics;
 pub use player_physics::PlayerPhysics;
 pub use snake_physics::SnakePhysics;
 pub use sword_physics::SwordPhysics;
