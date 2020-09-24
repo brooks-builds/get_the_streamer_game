@@ -25,6 +25,7 @@ use std::time::Duration;
 use twitch_chat_wrapper::chat_message::ChatMessage;
 
 const GAME_TIME: Duration = Duration::from_secs(120);
+const LIVES: u8 = 3;
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -36,6 +37,7 @@ pub struct GameState {
     winning_player: Option<Chatter>,
     teammates: Vec<Chatter>,
     damage_cooldown: u8,
+    lives_left: u8,
 }
 
 impl GameState {
@@ -46,48 +48,8 @@ impl GameState {
     ) -> GameResult<GameState> {
         send_to_chat.send("Chat vs. Streamer game started! Use the commands on screen to drop objects that the streamer will attempt to avoid".to_owned()).unwrap();
         let screen_size = graphics::drawable_size(context);
-        let mut interface = Interface::new(context, screen_size)?;
+        let mut interface = Interface::new(context, screen_size, LIVES)?;
         let framerate_target = 60;
-
-        Self::create_instruction(
-            &mut interface,
-            context,
-            "/LargeFlame.png",
-            (4, 1),
-            "#fire <column>",
-            1.5,
-            200.0,
-        )?;
-
-        Self::create_instruction(
-            &mut interface,
-            context,
-            "/item1BIT_sword.png",
-            (1, 1),
-            "#sword <column>",
-            2.5,
-            300.0,
-        )?;
-
-        Self::create_instruction(
-            &mut interface,
-            context,
-            "/snake.png",
-            (4, 1),
-            "#snake <column>",
-            2.5,
-            400.0,
-        )?;
-
-        Self::create_instruction(
-            &mut interface,
-            context,
-            "/heart.png",
-            (1, 1),
-            "#heart <column>",
-            1.5,
-            500.0,
-        )?;
 
         // create timer block
         let timer_draw_system = TimerDrawSystem::new(screen_size, context)?;
@@ -95,7 +57,7 @@ impl GameState {
         let timer_physics_system =
             TimerPhysicsSystem::new(timer_size.1, GAME_TIME, framerate_target as f32);
         let timer_game_object = GameObject::new(
-            screen_size.0 - interface.instruction_width,
+            screen_size.0 - interface.width,
             0.0,
             Some(Box::new(timer_draw_system)),
             timer_size.0,
@@ -140,6 +102,7 @@ impl GameState {
             player_hit_object_event: receive_player_hit_object_event,
             teammates: vec![],
             damage_cooldown: 0,
+            lives_left: LIVES,
         })
     }
 
@@ -161,37 +124,12 @@ impl GameState {
         Ok(())
     }
 
-    fn create_instruction(
-        interface: &mut Interface,
-        context: &mut Context,
-        sprite_path: &'static str,
-        sprite_count: (u16, u16),
-        label: &'static str,
-        scale_by: f32,
-        y: f32,
-    ) -> GameResult<()> {
-        let sprite = Sprite::new(context, sprite_path, sprite_count.0, sprite_count.1)?;
-        let draw_system = GameObjectDrawSystem::new(Some(sprite), Some(label), scale_by);
-        let size = draw_system.get_size().unwrap_or((50.0, 50.0));
-        let game_object = GameObject::new(
-            interface.location.x + interface.location.w / 2.0 - size.0 / 2.0,
-            y,
-            Some(Box::new(draw_system)),
-            size.0,
-            size.1,
-            None,
-            false,
-            None,
-            GameObjectType::Interface,
-            None,
-        );
-
-        interface.add_game_object(game_object);
-
-        Ok(())
+    fn get_player(&self) -> Option<&GameObject> {
+        self.game_objects
+            .iter()
+            .find(|game_object| game_object.my_type == GameObjectType::Player)
     }
 }
-
 impl EventHandler for GameState {
     fn update(&mut self, context: &mut Context) -> GameResult {
         while timer::check_update_time(context, self.framerate_target) {
@@ -231,10 +169,7 @@ impl EventHandler for GameState {
                 }
             }
 
-            let arena_size = (
-                screen_size.0 - self.interface.instruction_width,
-                screen_size.1,
-            );
+            let arena_size = (screen_size.0 - self.interface.width, screen_size.1);
 
             let collidable_game_objects: Vec<GameObject> = self
                 .game_objects
@@ -261,7 +196,6 @@ impl EventHandler for GameState {
             println!("game object count: {}", self.game_objects.len());
 
             if let Ok(chatter_name) = self.player_hit_object_event.try_recv() {
-                // we got hit, so lose a life
                 let message_to_chat = format!("The streamer was hit by {}", &chatter_name.name);
                 self.send_to_chat.send(message_to_chat).unwrap();
             }
@@ -275,7 +209,13 @@ impl EventHandler for GameState {
                 self.winning_player = Some(Chatter::new("Someone".to_owned(), (50, 25, 200)));
             }
 
-            if let Err(error) = self.interface.update(context) {
+            // get the player lives left
+            let lives_left = if let Some(player) = self.get_player() {
+                player.get_lives_left().unwrap_or(3)
+            } else {
+                3
+            };
+            if let Err(error) = self.interface.update(context, lives_left) {
                 eprintln!("Error updating game objects in interface: {}", error);
             }
 
@@ -303,6 +243,9 @@ impl EventHandler for GameState {
             self.winning_player.as_ref(),
             &self.teammates,
         )?;
+
+        let fps = ggez::timer::fps(context);
+        println!("fps: {}", fps);
 
         graphics::present(context)
     }

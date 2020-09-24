@@ -27,4 +27,8 @@ impl LifeSystem for SnakeLifeSystem {
     }
 
     fn gain_life(&mut self) {}
+
+    fn get_lives_left(&self) -> u8 {
+        0
+    }
 }

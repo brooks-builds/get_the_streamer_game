@@ -11,7 +11,7 @@ pub struct GameObject {
     pub location: Rect,
     draw_system: Option<Box<dyn DrawSystem>>,
     physics_system: Option<Box<dyn PhysicsSystem>>,
-    life_system: Option<Box<dyn LifeSystem>>,
+    pub life_system: Option<Box<dyn LifeSystem>>,
     pub collidable: bool,
     pub chatter: Option<Chatter>,
     rotation: f32,
@@ -91,6 +91,14 @@ impl GameObject {
             life_system.is_alive()
         } else {
             true
+        }
+    }
+
+    pub fn get_lives_left(&self) -> Option<u8> {
+        if let Some(life_system) = &self.life_system {
+            Some(life_system.get_lives_left())
+        } else {
+            None
         }
     }
 }

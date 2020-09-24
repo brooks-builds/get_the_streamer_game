@@ -39,9 +39,13 @@ impl LifeSystem for PlayerLifeSystem {
     }
 
     fn gain_life(&mut self) {
-        // #[cfg(debug_assertions)]
+        #[cfg(debug_assertions)]
         println!("player gained a life");
 
         self.lives += 1;
+    }
+
+    fn get_lives_left(&self) -> u8 {
+        self.lives
     }
 }

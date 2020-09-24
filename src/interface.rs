@@ -5,64 +5,35 @@ use ggez::graphics::{
 };
 use ggez::nalgebra::Point2;
 use ggez::{graphics, timer, Context, GameResult};
-use rand::prelude::*;
+use graphics::Image;
 
 const DROP_ZONE_COUNT: u8 = 10;
 const DROP_ZONE_HEIGHT: f32 = 50.0;
 const GAME_OVER_FONT_SIZE: f32 = 150.0;
 
 pub struct Interface {
-    title: Text,
-    instruction_background: Mesh,
-    margin: f32,
-    pub instruction_width: f32,
-    commands: Vec<Text>,
-    command_height: usize,
-    command_start_at: f32,
-    pub location: Rect,
+    pub width: f32,
     drop_zones: Vec<Rect>,
     drop_zone_background: Mesh,
     drop_zone_labels: Vec<Text>,
     single_drop_zone_width: f32,
-    game_over_text: Text,
-    dark_mask: Mesh,
     game_objects: Vec<GameObject>,
-    teammates_count: usize,
-    teammate_locations: Vec<Point2<f32>>,
+    instruction_image: Image,
+    heart_image: Image,
+    player_lives_left: u8,
 }
 
 impl Interface {
     pub fn new(
         context: &mut Context,
         (screen_width, screen_height): (f32, f32),
+        player_lives_left: u8,
     ) -> GameResult<Interface> {
-        let mut title = Text::new("Get the Streamer!");
-
-        title.set_font(Font::default(), Scale::uniform(50.0));
-        let (title_width, title_height) = title.dimensions(context);
+        let instruction_image = Image::new(context, "/sidebar.png")?;
+        let width = instruction_image.width().into();
         let margin = 100.0;
-        let instruction_width = title_width as f32 + margin * 2.0;
-        let location = Rect::new(
-            screen_width - instruction_width,
-            0.0,
-            instruction_width,
-            screen_height,
-        );
-
-        let instruction_background = MeshBuilder::new()
-            .rectangle(
-                DrawMode::fill(),
-                location,
-                Color::from_rgb(0x08, 0x20, 0x4e),
-            )
-            .build(context)?;
-
-        let commands = vec![];
-        let command_height = 150;
-        let command_start_at = title_height as f32 + margin * 4.0;
-
         let mut drop_zones = vec![];
-        let drop_zone_width = screen_width - instruction_width;
+        let drop_zone_width = screen_width - width;
         let single_drop_zone_width = drop_zone_width / DROP_ZONE_COUNT as f32;
         let mut drop_zone_labels = vec![];
 
@@ -101,24 +72,30 @@ impl Interface {
             )
             .build(context)?;
 
+        let mut attack_subtitle = Text::new("Attack the Streamer with following commands:");
+        attack_subtitle.set_font(Font::default(), Scale::uniform(30.0));
+        attack_subtitle.set_bounds(Point2::new(width, 60.0), Align::Center);
+
+        let mut help_subtitle = Text::new("Help the Streamer with following commands:");
+        help_subtitle.set_font(Font::default(), Scale::uniform(30.0));
+        help_subtitle.set_bounds(Point2::new(width, 60.0), Align::Center);
+
+        let mut player_lives_left_subtitle = Text::new("Streamer Lives Left:");
+        player_lives_left_subtitle.set_font(Font::default(), Scale::uniform(30.0));
+        player_lives_left_subtitle.set_bounds(Point2::new(width, 60.0), Align::Center);
+
+        let heart_image = Image::new(context, "/heart.png")?;
+
         Ok(Interface {
-            title,
-            instruction_background,
-            margin,
-            instruction_width,
-            commands,
-            command_height,
-            command_start_at,
-            location,
+            width,
             drop_zones,
             drop_zone_background,
             drop_zone_labels,
             single_drop_zone_width,
-            game_over_text,
-            dark_mask,
             game_objects: vec![],
-            teammates_count: 0,
-            teammate_locations: vec![],
+            instruction_image,
+            heart_image,
+            player_lives_left,
         })
     }
     pub fn draw(
@@ -128,62 +105,28 @@ impl Interface {
         winning_player: Option<&Chatter>,
         teammates: &Vec<Chatter>,
     ) -> GameResult<()> {
-        self.draw_background(context)?;
-        self.draw_title(context, screen_size)?;
-        self.draw_commands(context, screen_size)?;
         self.draw_drop_zones(context)?;
-        self.draw_game_objects(context)?;
-
-        if let Some(chatter) = winning_player {
-            self.draw_game_over_text(context, screen_size, chatter, teammates)?;
-        }
-
-        Ok(())
-    }
-
-    fn draw_title(
-        &self,
-        context: &mut Context,
-        (screen_width, _screen_height): (f32, f32),
-    ) -> GameResult<()> {
-        let (title_width, _title_height) = self.title.dimensions(context);
 
         graphics::draw(
             context,
-            &self.title,
-            DrawParam::new().dest(Point2::new(
-                screen_width - title_width as f32 - self.margin,
-                self.margin,
-            )),
-        )
-    }
+            &self.instruction_image,
+            DrawParam::new().dest(Point2::new(screen_size.0 - self.width, 0.0)),
+        )?;
 
-    fn draw_background(&self, context: &mut Context) -> GameResult<()> {
-        graphics::draw(context, &self.instruction_background, DrawParam::new())
-    }
+        let mut heart_x = screen_size.0
+            - (self.width / 2.0)
+            - ((self.heart_image.width() as f32) * self.player_lives_left as f32) / 2.0;
+        for index in 0..self.player_lives_left {
+            graphics::draw(
+                context,
+                &self.heart_image,
+                DrawParam::new().dest(Point2::new(heart_x, 1015.0)),
+            )?;
 
-    fn draw_commands(
-        &self,
-        context: &mut Context,
-        (screen_width, _screen_height): (f32, f32),
-    ) -> GameResult<()> {
-        self.commands
-            .iter()
-            .enumerate()
-            .try_for_each(|(index, command_text)| {
-                let command_text_size = command_text.dimensions(context);
-                graphics::draw(
-                    context,
-                    command_text,
-                    DrawParam::new().dest(Point2::new(
-                        screen_width
-                            - (command_text_size.0 / 2) as f32
-                            - self.margin
-                            - self.instruction_width / 2.0,
-                        (index * self.command_height) as f32 + self.command_start_at,
-                    )),
-                )
-            })
+            heart_x += self.heart_image.width() as f32 + 5.0;
+        }
+
+        Ok(())
     }
 
     fn draw_drop_zones(&self, context: &mut Context) -> GameResult<()> {
@@ -224,85 +167,15 @@ impl Interface {
         )
     }
 
-    fn draw_game_over_text(
-        &mut self,
-        context: &mut Context,
-        (screen_width, screen_height): (f32, f32),
-        winner: &Chatter,
-        teammates: &Vec<Chatter>,
-    ) -> GameResult<()> {
-        graphics::draw(context, &self.dark_mask, DrawParam::default())?;
-
-        graphics::draw(
-            context,
-            &self.game_over_text,
-            DrawParam::default().dest(Point2::new(0.0, 50.0)),
-        )?;
-
-        let mut winner_text = Text::new(format!("{} won!", winner.name));
-        winner_text.set_font(Font::default(), Scale::uniform(100.0));
-        winner_text.set_bounds(Point2::new(screen_width, screen_height), Align::Center);
-        graphics::draw(
-            context,
-            &winner_text,
-            DrawParam::new()
-                .dest(Point2::new(0.0, 200.0))
-                .color(Color::from_rgb(winner.red, winner.green, winner.blue)),
-        )?;
-
-        if self.teammates_count < teammates.len() {
-            let mut rng = thread_rng();
-            self.teammates_count += 1;
-            self.teammate_locations.push(Point2::new(
-                rng.gen_range(0.0, screen_width - 100.0),
-                rng.gen_range(500.0, screen_height - 50.0),
-            ));
-        }
-
-        let mut teammates_text = Text::new("with Teammates:");
-        teammates_text.set_font(Font::default(), Scale::uniform(50.0));
-        teammates_text.set_bounds(Point2::new(screen_width, screen_height), Align::Center);
-
-        graphics::draw(
-            context,
-            &teammates_text,
-            DrawParam::new().dest(Point2::new(0.0, 400.0)),
-        )?;
-
-        for teammates_index in 0..self.teammates_count {
-            if *winner == teammates[teammates_index] {
-                continue;
-            }
-
-            let teammate = &teammates[teammates_index];
-            let mut teammate_name_text = Text::new(teammate.name.to_owned());
-            teammate_name_text.set_font(Font::default(), Scale::uniform(75.0));
-            graphics::draw(
-                context,
-                &teammate_name_text,
-                DrawParam::new()
-                    .color(Color::from_rgb(teammate.red, teammate.green, teammate.blue))
-                    .dest(self.teammate_locations[teammates_index]),
-            )?;
-        }
-
-        Ok(())
-    }
-
-    fn draw_game_objects(&self, context: &mut Context) -> GameResult<()> {
-        self.game_objects
-            .iter()
-            .try_for_each(|game_object| game_object.draw(context, false))
-    }
-
     pub fn add_game_object(&mut self, game_object: GameObject) {
         self.game_objects.push(game_object);
     }
 
-    pub fn update(&mut self, context: &mut Context) -> Result<()> {
+    pub fn update(&mut self, context: &mut Context, player_lives_left: u8) -> Result<()> {
         let time_since_start = timer::time_since_start(context);
         let screen_size = graphics::drawable_size(context);
         let collidable_game_objects = vec![];
+        self.player_lives_left = player_lives_left;
 
         self.game_objects.iter_mut().try_for_each(|game_object| {
             game_object.update(
@@ -312,5 +185,13 @@ impl Interface {
                 &collidable_game_objects,
             )
         })
+    }
+
+    fn draw_player_lives_left(
+        &self,
+        context: &mut Context,
+        screen_size: (f32, f32),
+    ) -> GameResult<()> {
+        Ok(())
     }
 }

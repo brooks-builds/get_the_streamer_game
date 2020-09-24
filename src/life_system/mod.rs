@@ -19,4 +19,5 @@ where
     fn hit(&mut self);
     fn update(&mut self, screen_size: (f32, f32), location: &Rect);
     fn gain_life(&mut self);
+    fn get_lives_left(&self) -> u8;
 }
