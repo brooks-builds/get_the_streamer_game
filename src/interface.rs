@@ -1,3 +1,5 @@
+use crate::running_state::RunningState;
+
 use super::{Chatter, GameObject};
 use eyre::Result;
 use ggez::graphics::{
@@ -21,6 +23,7 @@ pub struct Interface {
     instruction_image: Image,
     heart_image: Image,
     player_lives_left: u8,
+    full_mask: Mesh,
 }
 
 impl Interface {
@@ -64,7 +67,7 @@ impl Interface {
         game_over_text.set_font(Font::default(), Scale::uniform(GAME_OVER_FONT_SIZE));
         game_over_text.set_bounds(Point2::new(screen_width, screen_height), Align::Center);
 
-        let dark_mask = MeshBuilder::new()
+        let full_mask = MeshBuilder::new()
             .rectangle(
                 DrawMode::fill(),
                 Rect::new(0.0, 0.0, screen_width, screen_height),
@@ -96,14 +99,16 @@ impl Interface {
             instruction_image,
             heart_image,
             player_lives_left,
+            full_mask,
         })
     }
     pub fn draw(
         &mut self,
         context: &mut Context,
         screen_size: (f32, f32),
-        winning_player: Option<&Chatter>,
+        winning_players: &Vec<Chatter>,
         teammates: &Vec<Chatter>,
+        running_state: &RunningState,
     ) -> GameResult<()> {
         self.draw_drop_zones(context)?;
 
@@ -116,7 +121,7 @@ impl Interface {
         let mut heart_x = screen_size.0
             - (self.width / 2.0)
             - ((self.heart_image.width() as f32) * self.player_lives_left as f32) / 2.0;
-        for index in 0..self.player_lives_left {
+        for _ in 0..self.player_lives_left {
             graphics::draw(
                 context,
                 &self.heart_image,
@@ -124,6 +129,19 @@ impl Interface {
             )?;
 
             heart_x += self.heart_image.width() as f32 + 5.0;
+        }
+
+        if running_state.is_game_over() {
+            graphics::draw(context, &self.full_mask, DrawParam::new())?;
+            let mut title = Text::new("Game Over!");
+            title.set_font(Font::default(), Scale::uniform(50.0));
+            let title_width = title.width(context);
+
+            graphics::draw(
+                context,
+                &title,
+                DrawParam::new().dest(Point2::new(5.0, 5.0)),
+            )?;
         }
 
         Ok(())

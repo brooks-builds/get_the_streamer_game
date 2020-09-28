@@ -24,7 +24,9 @@ impl LifeSystem for FireLifeSystem {
         self.birth_time.elapsed() < self.time_to_live
     }
 
-    fn hit(&mut self) {}
+    fn hit(&mut self) -> bool {
+        false
+    }
 
     fn update(&mut self, _screen_size: (f32, f32), _location: &Rect) {}
 

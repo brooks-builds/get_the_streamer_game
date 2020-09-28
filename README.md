@@ -54,9 +54,14 @@ get_the_streamer_game
   - [x] When the streamer hits the heart, the streamer gains a life
   - [x] When the streamer hits the heart, the heart dies
   - [x] Display streamer lives left in the instruction area
-- [ ] Bugs
-  - [ ] When player runs out of lives, player disappears and game doesn't end
+- [x] Bugs
+  - [x] When player runs out of lives, player disappears and game doesn't end
+  - [x] When player wins, game doesn't end
+  - [x] When player is hit, multiple messages get sent to Twitch
+  - [x] When player dies the hearts reset
 - [ ] Polish
+  - [ ] Create a game over screen where participants names and what they dropped are displayed on screen / scrolling up like credits
+  - [ ] Create a build.rs file in the root of the project to copy assets into game proper (https://doc.rust-lang.org/cargo/reference/build-scripts.html)
   - [ ] Show player iframes by setting opacity low
   - [ ] When quitting the app, exit all processes
   - [ ] Scale up the fire sprite

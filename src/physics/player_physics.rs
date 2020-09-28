@@ -91,18 +91,18 @@ impl PhysicsSystem for PlayerPhysics {
         self.stay_in_arena(location, arena);
 
         if let Some(game_object) = self.get_colliding_with(collidable_game_objects, location) {
-            let chatter = if let Some(chatter) = game_object.chatter {
-                chatter
-            } else {
-                Chatter::new(DEFAULT_CHATTER_NAME.to_owned(), (255, 255, 255))
-            };
-            self.player_hit_object.send(chatter)?;
-
             if let Some(player_life_system) = life_system.as_deref_mut() {
                 if GameObjectType::Heart == game_object.my_type {
                     player_life_system.gain_life();
                 } else {
-                    player_life_system.hit();
+                    if player_life_system.hit() {
+                        let chatter = if let Some(chatter) = game_object.chatter {
+                            chatter
+                        } else {
+                            Chatter::new(DEFAULT_CHATTER_NAME.to_owned(), (255, 255, 255))
+                        };
+                        self.player_hit_object.send(chatter)?;
+                    }
                 }
             }
         }

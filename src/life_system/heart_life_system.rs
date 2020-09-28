@@ -22,8 +22,9 @@ impl LifeSystem for HeartLifeSystem {
         self.alive
     }
 
-    fn hit(&mut self) {
+    fn hit(&mut self) -> bool {
         self.die_in -= 1;
+        true
     }
 
     fn update(&mut self, screen_size: (f32, f32), location: &Rect) {

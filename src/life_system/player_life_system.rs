@@ -22,10 +22,13 @@ impl LifeSystem for PlayerLifeSystem {
         self.lives > 0
     }
 
-    fn hit(&mut self) {
+    fn hit(&mut self) -> bool {
         if self.iframes_left == 0 {
             self.lives -= 1;
             self.iframes_left = 120;
+            true
+        } else {
+            false
         }
     }
 

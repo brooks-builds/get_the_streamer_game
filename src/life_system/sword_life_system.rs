@@ -22,8 +22,9 @@ impl LifeSystem for SwordLifeSystem {
         self.bounces < self.breaks_at
     }
 
-    fn hit(&mut self) {
+    fn hit(&mut self) -> bool {
         self.bounces += 1;
+        true
     }
 
     fn update(&mut self, _screen_size: (f32, f32), _location: &Rect) {}

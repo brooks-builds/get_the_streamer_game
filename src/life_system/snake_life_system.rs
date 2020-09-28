@@ -18,7 +18,9 @@ impl LifeSystem for SnakeLifeSystem {
         self.on_screen
     }
 
-    fn hit(&mut self) {}
+    fn hit(&mut self) -> bool {
+        true
+    }
 
     fn update(&mut self, screen_size: (f32, f32), location: &Rect) {
         if location.x + location.w < 0.0 || location.x > screen_size.0 {

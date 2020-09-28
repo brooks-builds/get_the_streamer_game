@@ -6,6 +6,7 @@ mod game_object_type;
 mod interface;
 mod life_system;
 mod physics;
+mod running_state;
 mod sprites;
 
 use chatter::Chatter;
@@ -19,6 +20,7 @@ use ggez::{graphics, timer, Context, GameResult};
 use interface::Interface;
 use life_system::{LifeSystem, PlayerLifeSystem};
 use physics::{PhysicsSystem, PlayerPhysics, TimerPhysicsSystem};
+use running_state::RunningState;
 use sprites::Sprite;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::time::Duration;
@@ -34,10 +36,10 @@ pub struct GameState {
     framerate_target: u32,
     game_objects: Vec<GameObject>,
     player_hit_object_event: Receiver<Chatter>,
-    winning_player: Option<Chatter>,
+    winning_players: Vec<Chatter>,
     teammates: Vec<Chatter>,
     damage_cooldown: u8,
-    lives_left: u8,
+    running_state: RunningState,
 }
 
 impl GameState {
@@ -98,11 +100,11 @@ impl GameState {
             interface,
             framerate_target,
             game_objects,
-            winning_player: None,
+            winning_players: vec![],
             player_hit_object_event: receive_player_hit_object_event,
             teammates: vec![],
             damage_cooldown: 0,
-            lives_left: LIVES,
+            running_state: RunningState::Playing,
         })
     }
 
@@ -133,15 +135,16 @@ impl GameState {
 impl EventHandler for GameState {
     fn update(&mut self, context: &mut Context) -> GameResult {
         while timer::check_update_time(context, self.framerate_target) {
-            if let Some(_) = self.winning_player {
+            if self.running_state.is_game_over() {
                 return Ok(());
             }
+
             let screen_size = graphics::drawable_size(context);
 
             let game_time_left = (GAME_TIME - timer::time_since_start(context)).as_secs();
             if game_time_left == 0 {
-                self.winning_player =
-                    Some(Chatter::new("The Streamer".to_owned(), (200, 150, 230)));
+                self.winning_players
+                    .push(Chatter::new("The Streamer".to_owned(), (200, 150, 230)));
                 self.teammates = self
                     .teammates
                     .clone()
@@ -195,9 +198,10 @@ impl EventHandler for GameState {
             #[cfg(debug_assertions)]
             println!("game object count: {}", self.game_objects.len());
 
-            if let Ok(chatter_name) = self.player_hit_object_event.try_recv() {
-                let message_to_chat = format!("The streamer was hit by {}", &chatter_name.name);
+            if let Ok(chatter) = self.player_hit_object_event.try_recv() {
+                let message_to_chat = format!("The streamer was hit by {}", &chatter.name);
                 self.send_to_chat.send(message_to_chat).unwrap();
+                self.winning_players.push(chatter);
             }
 
             if self
@@ -206,14 +210,14 @@ impl EventHandler for GameState {
                 .find(|game_object| game_object.my_type == GameObjectType::Player)
                 .is_none()
             {
-                self.winning_player = Some(Chatter::new("Someone".to_owned(), (50, 25, 200)));
+                self.running_state = RunningState::ChatWon;
             }
 
             // get the player lives left
             let lives_left = if let Some(player) = self.get_player() {
                 player.get_lives_left().unwrap_or(3)
             } else {
-                3
+                0
             };
             if let Err(error) = self.interface.update(context, lives_left) {
                 eprintln!("Error updating game objects in interface: {}", error);
@@ -240,8 +244,9 @@ impl EventHandler for GameState {
         self.interface.draw(
             context,
             screen_size,
-            self.winning_player.as_ref(),
+            &self.winning_players,
             &self.teammates,
+            &self.running_state,
         )?;
 
         let fps = ggez::timer::fps(context);
