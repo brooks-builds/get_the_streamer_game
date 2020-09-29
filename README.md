@@ -61,7 +61,7 @@ get_the_streamer_game
   - [x] When player dies the hearts reset
 - [ ] Polish
   - [ ] Create a game over screen where participants names and what they dropped are displayed on screen / scrolling up like credits
-  - [ ] Create a build.rs file in the root of the project to copy assets into game proper (https://doc.rust-lang.org/cargo/reference/build-scripts.html)
+  - [x] Create a build.rs file in the root of the project to copy assets into game proper (https://doc.rust-lang.org/cargo/reference/build-scripts.html)
   - [ ] Show player iframes by setting opacity low
   - [ ] When quitting the app, exit all processes
   - [ ] Scale up the fire sprite
