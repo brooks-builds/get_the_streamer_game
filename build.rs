@@ -1,10 +1,6 @@
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use fs_extra::dir::CopyOptions;
-use std::{
-    env,
-    path::Path,
-    fs,
-};
+use std::{env, fs, path::Path};
 
 ///this gets appended to the target folder
 const OUTPUT_FOLDER: &str = "resources";
@@ -20,9 +16,11 @@ fn main() -> Result<()> {
 
     //we call parent thrice here to get to the target/debug or target/release folder
     for _ in 0..3 {
-        out_path = out_path.parent().context("failed to get parent directory")?;
+        out_path = out_path
+            .parent()
+            .context("failed to get parent directory")?;
     }
-    
+
     //append output directory for assets
     let out_path_buf = out_path.join(OUTPUT_FOLDER);
     out_path = out_path_buf.as_path();
@@ -39,6 +37,5 @@ fn main() -> Result<()> {
         //use fs_extra crate to recursively copy directory
         fs_extra::copy_items(&[file?.path()], out_path, &copy_options).context("copy failed")?;
     }
-
     Ok(())
 }

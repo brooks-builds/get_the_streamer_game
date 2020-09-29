@@ -24,6 +24,8 @@ pub struct Interface {
     heart_image: Image,
     player_lives_left: u8,
     full_mask: Mesh,
+    game_over_title_location: Point2<f32>,
+    game_over_title: Text,
 }
 
 impl Interface {
@@ -89,6 +91,14 @@ impl Interface {
 
         let heart_image = Image::new(context, "/heart.png")?;
 
+        let mut game_over_title = Text::new("Game Over!");
+        game_over_title.set_font(Font::default(), Scale::uniform(50.0));
+        let game_over_title_width = game_over_title.width(context) as f32;
+        let game_over_title_location = Point2::new(
+            screen_width / 2.0 - game_over_title_width / 2.0,
+            screen_height,
+        );
+
         Ok(Interface {
             width,
             drop_zones,
@@ -100,6 +110,8 @@ impl Interface {
             heart_image,
             player_lives_left,
             full_mask,
+            game_over_title,
+            game_over_title_location,
         })
     }
     pub fn draw(
@@ -133,14 +145,11 @@ impl Interface {
 
         if running_state.is_game_over() {
             graphics::draw(context, &self.full_mask, DrawParam::new())?;
-            let mut title = Text::new("Game Over!");
-            title.set_font(Font::default(), Scale::uniform(50.0));
-            let title_width = title.width(context);
 
             graphics::draw(
                 context,
-                &title,
-                DrawParam::new().dest(Point2::new(5.0, 5.0)),
+                &self.game_over_title,
+                DrawParam::new().dest(self.game_over_title_location),
             )?;
         }
 
@@ -189,7 +198,12 @@ impl Interface {
         self.game_objects.push(game_object);
     }
 
-    pub fn update(&mut self, context: &mut Context, player_lives_left: u8) -> Result<()> {
+    pub fn update(
+        &mut self,
+        context: &mut Context,
+        player_lives_left: u8,
+        running_state: &RunningState,
+    ) -> Result<()> {
         let time_since_start = timer::time_since_start(context);
         let screen_size = graphics::drawable_size(context);
         let collidable_game_objects = vec![];
@@ -202,7 +216,13 @@ impl Interface {
                 context,
                 &collidable_game_objects,
             )
-        })
+        })?;
+
+        if running_state.is_game_over() {
+            self.game_over_title_location.y -= 1.0;
+        }
+
+        Ok(())
     }
 
     fn draw_player_lives_left(

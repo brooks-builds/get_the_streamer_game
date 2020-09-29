@@ -14,7 +14,7 @@ pub struct GameObjectDrawSystem {
 impl GameObjectDrawSystem {
     pub fn new(
         sprite: Option<Sprite>,
-        label: Option<&'static str>,
+        label: Option<String>,
         scale_by: f32,
     ) -> GameObjectDrawSystem {
         let label = match label {
@@ -48,6 +48,7 @@ impl DrawSystem for GameObjectDrawSystem {
         rotation: &f32,
         iframes: bool,
     ) -> GameResult<()> {
+        dbg!(&location);
         let opacity = if iframes {
             Some(self.iframe_opacity)
         } else {

@@ -61,7 +61,7 @@ get_the_streamer_game
   - [x] When player dies the hearts reset
 - [ ] Polish
   - [ ] Create a game over screen where participants names and what they dropped are displayed on screen / scrolling up like credits
-  - [x] Create a build.rs file in the root of the project to copy assets into game proper (https://doc.rust-lang.org/cargo/reference/build-scripts.html)
+  - [x] Update build.rs file that LordMSTE created in the root of the project to copy assets into game proper (https://doc.rust-lang.org/cargo/reference/build-scripts.html)
   - [ ] Show player iframes by setting opacity low
   - [ ] When quitting the app, exit all processes
   - [ ] Scale up the fire sprite
@@ -93,5 +93,6 @@ get_the_streamer_game
   - [ ] Swords fall out of arena before dissapearing (@LordMZTE)
   - [ ] Chatter with most hits wins (@LordMZTE)
   - [ ] Player can't change direction in mid-air (@LordMZTE)
+  - [ ] Drop slots have cooldown periods (@dannyfritz)
 - [ ] Maybe if we have performance issues
   - [ ] Load and store sprites in a data structure to get references later

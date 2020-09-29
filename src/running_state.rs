@@ -2,6 +2,7 @@ pub enum RunningState {
     Playing,
     PlayerWon,
     ChatWon,
+    Credits,
 }
 
 impl RunningState {
@@ -9,13 +10,14 @@ impl RunningState {
         match self {
             RunningState::Playing => false,
             RunningState::PlayerWon | RunningState::ChatWon => true,
+            RunningState::Credits => false,
         }
     }
 
     pub fn did_chat_win(&self) -> bool {
         match self {
             RunningState::ChatWon => true,
-            RunningState::PlayerWon | RunningState::Playing => false,
+            _ => false,
         }
     }
 }
