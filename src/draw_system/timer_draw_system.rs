@@ -42,7 +42,6 @@ impl DrawSystem for TimerDrawSystem {
         context: &mut Context,
         location: Point2<f32>,
         _rotation: &f32,
-        _iframes: bool,
     ) -> GameResult<()> {
         graphics::draw(context, &self.timer, DrawParam::new().dest(location))
     }

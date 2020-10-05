@@ -8,7 +8,6 @@ pub struct GameObjectDrawSystem {
     sprite: Option<Sprite>,
     label: Option<Text>,
     scale_by: f32,
-    iframe_opacity: f32,
 }
 
 impl GameObjectDrawSystem {
@@ -29,7 +28,6 @@ impl GameObjectDrawSystem {
             sprite,
             label,
             scale_by,
-            iframe_opacity: 0.1,
         }
     }
 }
@@ -46,17 +44,10 @@ impl DrawSystem for GameObjectDrawSystem {
         context: &mut Context,
         location: Point2<f32>,
         rotation: &f32,
-        iframes: bool,
     ) -> GameResult<()> {
         dbg!(&location);
-        let opacity = if iframes {
-            Some(self.iframe_opacity)
-        } else {
-            None
-        };
-
         if let Some(sprite) = &self.sprite {
-            sprite.draw(context, location, self.scale_by, rotation, opacity)?;
+            sprite.draw(context, location, self.scale_by, rotation, None)?;
         }
 
         let size = self.get_size().unwrap_or((50.0, 50.0));

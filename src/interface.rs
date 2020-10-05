@@ -143,6 +143,10 @@ impl Interface {
             heart_x += self.heart_image.width() as f32 + 5.0;
         }
 
+        for obj in &self.game_objects {
+            obj.draw(context)?;
+        }
+
         if running_state.is_game_over() {
             graphics::draw(context, &self.full_mask, DrawParam::new())?;
 
