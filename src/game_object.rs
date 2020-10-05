@@ -73,13 +73,12 @@ impl GameObject {
         Ok(())
     }
 
-    pub fn draw(&self, context: &mut Context, iframes: bool) -> GameResult<()> {
+    pub fn draw(&self, context: &mut Context) -> GameResult<()> {
         if let Some(draw_system) = &self.draw_system {
             draw_system.draw(
                 context,
                 Point2::new(self.location.x, self.location.y),
                 &self.rotation,
-                iframes,
             )?;
         }
 

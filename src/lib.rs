@@ -274,9 +274,7 @@ impl EventHandler for GameState {
         let screen_size = graphics::drawable_size(context);
 
         for game_object in self.game_objects.iter() {
-            let iframes_active =
-                GameObjectType::Player == game_object.my_type && self.damage_cooldown > 0;
-            game_object.draw(context, iframes_active)?;
+            game_object.draw(context)?;
         }
 
         self.interface.draw(

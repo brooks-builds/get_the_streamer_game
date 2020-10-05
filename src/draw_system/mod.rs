@@ -17,7 +17,6 @@ where
         context: &mut Context,
         location: Point2<f32>,
         rotation: &f32,
-        iframes: bool,
     ) -> GameResult<()>;
     fn get_size(&self) -> Option<(f32, f32)>;
 }
