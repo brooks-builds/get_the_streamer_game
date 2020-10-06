@@ -57,12 +57,18 @@ impl Command {
     fn get_id_from_message(message_part: Option<&str>) -> Result<u8, &'static str> {
         if let Some(id) = message_part {
             match id.parse::<u8>() {
-                Ok(number) => Ok(number),
+                Ok(number) => {
+                    if number < crate::DROP_ZONE_COUNT {
+                        Ok(number)
+                    } else {
+                        Err("The given column is outside of the arena")
+                    }
+                }
                 Err(_error) => return Err("I couldn't tell what column to drop into"),
             }
         } else {
             let mut rng = rand::thread_rng();
-            Ok(rng.gen_range(0, 10))
+            Ok(rng.gen_range(0, crate::DROP_ZONE_COUNT))
         }
     }
 

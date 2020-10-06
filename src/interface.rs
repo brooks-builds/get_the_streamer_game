@@ -9,7 +9,6 @@ use ggez::nalgebra::Point2;
 use ggez::{graphics, timer, Context, GameResult};
 use graphics::Image;
 
-const DROP_ZONE_COUNT: u8 = 10;
 const DROP_ZONE_HEIGHT: f32 = 50.0;
 const GAME_OVER_FONT_SIZE: f32 = 150.0;
 
@@ -39,10 +38,10 @@ impl Interface {
         let margin = 100.0;
         let mut drop_zones = vec![];
         let drop_zone_width = screen_width - width;
-        let single_drop_zone_width = drop_zone_width / DROP_ZONE_COUNT as f32;
+        let single_drop_zone_width = drop_zone_width / crate::DROP_ZONE_COUNT as f32;
         let mut drop_zone_labels = vec![];
 
-        for count in 0..DROP_ZONE_COUNT {
+        for count in 0..crate::DROP_ZONE_COUNT {
             let drop_zone = Rect::new(
                 count as f32 * single_drop_zone_width,
                 0.0,

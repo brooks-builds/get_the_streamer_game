@@ -26,6 +26,7 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::time::Duration;
 use twitch_chat_wrapper::chat_message::ChatMessage;
 
+pub const DROP_ZONE_COUNT: u8 = 10;
 const GAME_TIME: Duration = Duration::from_secs(120);
 const LIVES: u8 = 3;
 
