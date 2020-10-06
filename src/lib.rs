@@ -1,5 +1,6 @@
 mod chatter;
 mod command;
+mod credits;
 mod draw_system;
 mod game_object;
 mod game_object_type;
@@ -11,6 +12,7 @@ mod sprites;
 
 use chatter::Chatter;
 use command::Command;
+use credits::Credits;
 use draw_system::{DrawSystem, GameObjectDrawSystem, TimerDrawSystem};
 use game_object::GameObject;
 use game_object_type::GameObjectType;
@@ -40,6 +42,7 @@ pub struct GameState {
     teammates: Vec<Chatter>,
     damage_cooldown: u8,
     running_state: RunningState,
+    credits: Option<Credits>,
 }
 
 impl GameState {
@@ -105,6 +108,7 @@ impl GameState {
             teammates: vec![],
             damage_cooldown: 0,
             running_state: RunningState::Playing,
+            credits: None,
         })
     }
 
@@ -135,100 +139,95 @@ impl GameState {
 impl EventHandler for GameState {
     fn update(&mut self, context: &mut Context) -> GameResult {
         while timer::check_update_time(context, self.framerate_target) {
-            let screen_size = graphics::drawable_size(context);
-            // get the player lives left
-            let lives_left = if let Some(player) = self.get_player() {
-                player.get_lives_left().unwrap_or(3)
-            } else {
-                0
-            };
+            match self.running_state {
+                RunningState::Playing => {
+                    let screen_size = graphics::drawable_size(context);
+                    // get the player lives left
+                    let lives_left = if let Some(player) = self.get_player() {
+                        player.get_lives_left().unwrap_or(3)
+                    } else {
+                        0
+                    };
 
-            if let Err(error) = self
-                .interface
-                .update(context, lives_left, &self.running_state)
-            {
-                eprintln!("Error updating game objects in interface: {}", error);
-            }
+                    if lives_left == 0 {
+                        self.running_state = RunningState::ChatWon;
+                    }
 
-            if self.running_state.is_game_over() {
-                self.running_state = RunningState::Credits;
-                println!("clearing out game objects to show winners");
-            }
+                    if let Err(error) =
+                        self.interface
+                            .update(context, lives_left, &self.running_state)
+                    {
+                        eprintln!("Error updating game objects in interface: {}", error);
+                    }
 
-            let game_time_left = (GAME_TIME - timer::time_since_start(context)).as_secs();
-            if game_time_left == 0 {
-                self.winning_players
-                    .push(Chatter::new("The Streamer".to_owned(), (200, 150, 230)));
-                self.teammates = self
-                    .teammates
-                    .clone()
-                    .into_iter()
-                    .map(|mut chatter| {
-                        chatter.name = format!("not {}", chatter.name);
-                        chatter
-                    })
-                    .collect();
-                return Ok(());
-            }
+                    let game_time_left = (GAME_TIME - timer::time_since_start(context)).as_secs();
+                    if game_time_left == 0 {
+                        self.running_state = RunningState::PlayerWon;
+                    }
 
-            if let Ok(chat_message) = self.receive_from_chat.try_recv() {
-                let chatter_name = if let Some(display_name) = chat_message.display_name {
-                    display_name.clone()
-                } else {
-                    chat_message.name.clone()
-                };
-                match Command::new(
-                    &chat_message.message,
-                    Chatter::new(chatter_name, chat_message.color_rgb),
-                ) {
-                    Err(error) => self.send_to_chat.send(error.to_owned()).unwrap(),
-                    Ok(command) => self.handle_command(command, context)?,
+                    if let Ok(chat_message) = self.receive_from_chat.try_recv() {
+                        let chatter_name = if let Some(display_name) = chat_message.display_name {
+                            display_name.clone()
+                        } else {
+                            chat_message.name.clone()
+                        };
+                        match Command::new(
+                            &chat_message.message,
+                            Chatter::new(chatter_name, chat_message.color_rgb),
+                        ) {
+                            Err(error) => self.send_to_chat.send(error.to_owned()).unwrap(),
+                            Ok(command) => self.handle_command(command, context)?,
+                        }
+                    }
+
+                    let arena_size = (screen_size.0 - self.interface.width, screen_size.1);
+
+                    let collidable_game_objects: Vec<GameObject> = self
+                        .game_objects
+                        .clone()
+                        .into_iter()
+                        .filter(|game_object| game_object.collidable)
+                        .collect();
+
+                    self.game_objects.iter_mut().for_each(|game_object| {
+                        if let Err(error) = game_object.update(
+                            timer::time_since_start(context),
+                            arena_size,
+                            context,
+                            &collidable_game_objects,
+                        ) {
+                            eprintln!("error running update: {}", error)
+                        }
+                    });
+
+                    self.game_objects
+                        .retain(|game_object| game_object.is_alive());
+
+                    #[cfg(debug_assertions)]
+                    println!("game object count: {}", self.game_objects.len());
+
+                    if let Ok(chatter) = self.player_hit_object_event.try_recv() {
+                        let message_to_chat = format!("The streamer was hit by {}", &chatter.name);
+                        self.send_to_chat.send(message_to_chat).unwrap();
+                        self.winning_players.push(chatter);
+                    }
+
+                    if self
+                        .game_objects
+                        .iter()
+                        .find(|game_object| game_object.my_type == GameObjectType::Player)
+                        .is_none()
+                    {
+                        self.running_state = RunningState::ChatWon;
+                    }
                 }
-            }
-
-            let arena_size = (screen_size.0 - self.interface.width, screen_size.1);
-
-            let collidable_game_objects: Vec<GameObject> = self
-                .game_objects
-                .clone()
-                .into_iter()
-                .filter(|game_object| game_object.collidable)
-                .collect();
-
-            self.game_objects.iter_mut().for_each(|game_object| {
-                if let Err(error) = game_object.update(
-                    timer::time_since_start(context),
-                    arena_size,
-                    context,
-                    &collidable_game_objects,
-                ) {
-                    eprintln!("error running update: {}", error)
+                RunningState::ChatWon | RunningState::PlayerWon => {
+                    if let Some(credits) = &mut self.credits {
+                        credits.update();
+                    } else {
+                        self.credits = Some(Credits::new()?);
+                    }
                 }
-            });
-
-            self.game_objects
-                .retain(|game_object| game_object.is_alive());
-
-            #[cfg(debug_assertions)]
-            println!("game object count: {}", self.game_objects.len());
-
-            if let Ok(chatter) = self.player_hit_object_event.try_recv() {
-                let message_to_chat = format!("The streamer was hit by {}", &chatter.name);
-                self.send_to_chat.send(message_to_chat).unwrap();
-                self.winning_players.push(chatter);
-            }
-
-            if self
-                .game_objects
-                .iter()
-                .find(|game_object| game_object.my_type == GameObjectType::Player)
-                .is_none()
-            {
-                self.running_state = RunningState::ChatWon;
-            }
-
-            if self.damage_cooldown > 0 {
-                self.damage_cooldown -= 1;
             }
         }
         Ok(())

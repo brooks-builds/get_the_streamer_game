@@ -2,7 +2,6 @@ pub enum RunningState {
     Playing,
     PlayerWon,
     ChatWon,
-    Credits,
 }
 
 impl RunningState {
@@ -10,7 +9,6 @@ impl RunningState {
         match self {
             RunningState::Playing => false,
             RunningState::PlayerWon | RunningState::ChatWon => true,
-            RunningState::Credits => false,
         }
     }
 
