@@ -1,4 +1,3 @@
-mod credits_physics_system;
 pub mod fire_physics;
 mod heart_physics;
 mod player_physics;
@@ -9,7 +8,6 @@ mod timer_physics;
 use crate::life_system::LifeSystem;
 
 use super::{Chatter, GameObject};
-pub use credits_physics_system::CreditsPhysicsSystem;
 use eyre::Result;
 pub use fire_physics::FirePhysics;
 use ggez::graphics::Rect;

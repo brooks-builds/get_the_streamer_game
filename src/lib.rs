@@ -19,7 +19,7 @@ use ggez::graphics::BLACK;
 use ggez::{graphics, timer, Context, GameResult};
 use interface::Interface;
 use life_system::{LifeSystem, PlayerLifeSystem};
-use physics::{CreditsPhysicsSystem, PhysicsSystem, PlayerPhysics, TimerPhysicsSystem};
+use physics::{PhysicsSystem, PlayerPhysics, TimerPhysicsSystem};
 use running_state::RunningState;
 use sprites::Sprite;
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -131,32 +131,6 @@ impl GameState {
             .iter()
             .find(|game_object| game_object.my_type == GameObjectType::Player)
     }
-
-    fn create_winner_game_object(
-        &self,
-        chatter: &Chatter,
-        screen_size: (f32, f32),
-        context: &mut Context,
-    ) -> GameResult<GameObject> {
-        let game_object = GameObject::new(
-            screen_size.0 / 2.0,
-            screen_size.1 - 100.0,
-            Some(Box::new(GameObjectDrawSystem::new(
-                Some(Sprite::new(context, "/heart.png", 1, 1)?),
-                Some(chatter.name.clone()),
-                1.0,
-            ))),
-            50.0,
-            50.0,
-            Some(Box::new(CreditsPhysicsSystem::new())),
-            false,
-            Some(chatter.clone()),
-            GameObjectType::Enemy,
-            None,
-        );
-
-        Ok(game_object)
-    }
 }
 impl EventHandler for GameState {
     fn update(&mut self, context: &mut Context) -> GameResult {
@@ -177,14 +151,6 @@ impl EventHandler for GameState {
             }
 
             if self.running_state.is_game_over() {
-                self.game_objects.clear();
-                for chatter in &self.winning_players {
-                    self.game_objects.push(self.create_winner_game_object(
-                        chatter,
-                        screen_size,
-                        context,
-                    )?);
-                }
                 self.running_state = RunningState::Credits;
                 println!("clearing out game objects to show winners");
             }

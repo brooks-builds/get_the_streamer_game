@@ -24,8 +24,6 @@ pub struct Interface {
     heart_image: Image,
     player_lives_left: u8,
     full_mask: Mesh,
-    game_over_title_location: Point2<f32>,
-    game_over_title: Text,
 }
 
 impl Interface {
@@ -110,8 +108,6 @@ impl Interface {
             heart_image,
             player_lives_left,
             full_mask,
-            game_over_title,
-            game_over_title_location,
         })
     }
     pub fn draw(
@@ -149,12 +145,6 @@ impl Interface {
 
         if running_state.is_game_over() {
             graphics::draw(context, &self.full_mask, DrawParam::new())?;
-
-            graphics::draw(
-                context,
-                &self.game_over_title,
-                DrawParam::new().dest(self.game_over_title_location),
-            )?;
         }
 
         Ok(())
@@ -221,10 +211,6 @@ impl Interface {
                 &collidable_game_objects,
             )
         })?;
-
-        if running_state.is_game_over() {
-            self.game_over_title_location.y -= 1.0;
-        }
 
         Ok(())
     }
