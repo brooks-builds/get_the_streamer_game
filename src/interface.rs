@@ -14,6 +14,7 @@ const GAME_OVER_FONT_SIZE: f32 = 150.0;
 
 pub struct Interface {
     pub width: f32,
+    screen_size: (f32, f32),
     drop_zones: Vec<Rect>,
     drop_zone_background: Mesh,
     drop_zone_labels: Vec<Text>,
@@ -28,11 +29,12 @@ pub struct Interface {
 impl Interface {
     pub fn new(
         context: &mut Context,
-        (screen_width, screen_height): (f32, f32),
+        screen_size: (f32, f32),
         player_lives_left: u8,
     ) -> GameResult<Interface> {
         let instruction_image = Image::new(context, "/sidebar.png")?;
         let width = instruction_image.width().into();
+        let (screen_width, screen_height) = screen_size;
         let margin = 100.0;
         let mut drop_zones = vec![];
         let drop_zone_width = screen_width - width;
@@ -98,6 +100,7 @@ impl Interface {
 
         Ok(Interface {
             width,
+            screen_size,
             drop_zones,
             drop_zone_background,
             drop_zone_labels,
@@ -198,7 +201,7 @@ impl Interface {
         running_state: &RunningState,
     ) -> Result<()> {
         let time_since_start = timer::time_since_start(context);
-        let screen_size = graphics::drawable_size(context);
+        let screen_size = self.screen_size;
         let collidable_game_objects = vec![];
         self.player_lives_left = player_lives_left;
 

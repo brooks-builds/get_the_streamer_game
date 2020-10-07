@@ -35,6 +35,7 @@ const LIVES: u8 = 3;
 pub struct GameState {
     send_to_chat: Sender<String>,
     receive_from_chat: Receiver<ChatMessage>,
+    screen_size: (f32, f32),
     interface: Interface,
     framerate_target: u32,
     game_objects: Vec<GameObject>,
@@ -50,10 +51,10 @@ impl GameState {
     pub fn new(
         send_to_chat: Sender<String>,
         receive_from_chat: Receiver<ChatMessage>,
+        screen_size: (f32, f32),
         context: &mut Context,
     ) -> GameResult<GameState> {
         send_to_chat.send("Chat vs. Streamer game started! Use the commands on screen to drop objects that the streamer will attempt to avoid".to_owned()).unwrap();
-        let screen_size = graphics::drawable_size(context);
         let mut interface = Interface::new(context, screen_size, LIVES)?;
         let framerate_target = 60;
 
@@ -101,6 +102,7 @@ impl GameState {
         Ok(GameState {
             send_to_chat,
             receive_from_chat,
+            screen_size,
             interface,
             framerate_target,
             game_objects,
@@ -142,7 +144,6 @@ impl EventHandler for GameState {
         while timer::check_update_time(context, self.framerate_target) {
             match self.running_state {
                 RunningState::Playing => {
-                    let screen_size = graphics::drawable_size(context);
                     // get the player lives left
                     let lives_left = if let Some(player) = self.get_player() {
                         player.get_lives_left().unwrap_or(3)
@@ -182,7 +183,7 @@ impl EventHandler for GameState {
                         }
                     }
 
-                    let arena_size = (screen_size.0 - self.interface.width, screen_size.1);
+                    let arena_size = (self.screen_size.0 - self.interface.width, self.screen_size.1);
 
                     let collidable_game_objects: Vec<GameObject> = self
                         .game_objects
@@ -230,6 +231,7 @@ impl EventHandler for GameState {
                         self.credits = Some(Credits::new(
                             self.running_state,
                             context,
+                            self.screen_size,
                             &self.hitting_chatters,
                         )?);
                     }
@@ -242,15 +244,13 @@ impl EventHandler for GameState {
     fn draw(&mut self, context: &mut Context) -> GameResult {
         graphics::clear(context, BLACK);
 
-        let screen_size = graphics::drawable_size(context);
-
         for game_object in self.game_objects.iter() {
             game_object.draw(context)?;
         }
 
         self.interface.draw(
             context,
-            screen_size,
+            self.screen_size,
             &self.hitting_chatters,
             &self.teammates,
             &self.running_state,
