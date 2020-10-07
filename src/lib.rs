@@ -29,7 +29,7 @@ use std::time::Duration;
 use twitch_chat_wrapper::chat_message::ChatMessage;
 
 pub const DROP_ZONE_COUNT: u8 = 10;
-const GAME_TIME: Duration = Duration::from_secs(120);
+const GAME_TIME: Duration = Duration::from_secs(5);
 const LIVES: u8 = 3;
 
 pub struct GameState {
@@ -39,7 +39,7 @@ pub struct GameState {
     framerate_target: u32,
     game_objects: Vec<GameObject>,
     player_hit_object_event: Receiver<Chatter>,
-    winning_players: Vec<Chatter>,
+    hitting_chatters: Vec<Chatter>,
     teammates: Vec<Chatter>,
     damage_cooldown: u8,
     running_state: RunningState,
@@ -104,7 +104,7 @@ impl GameState {
             interface,
             framerate_target,
             game_objects,
-            winning_players: vec![],
+            hitting_chatters: vec![],
             player_hit_object_event: receive_player_hit_object_event,
             teammates: vec![],
             damage_cooldown: 0,
@@ -161,7 +161,8 @@ impl EventHandler for GameState {
                         eprintln!("Error updating game objects in interface: {}", error);
                     }
 
-                    let game_time_left = (GAME_TIME - timer::time_since_start(context)).as_secs();
+                    let game_time_left =
+                        GAME_TIME.as_secs() - timer::time_since_start(context).as_secs();
                     if game_time_left == 0 {
                         self.running_state = RunningState::PlayerWon;
                     }
@@ -210,7 +211,7 @@ impl EventHandler for GameState {
                     if let Ok(chatter) = self.player_hit_object_event.try_recv() {
                         let message_to_chat = format!("The streamer was hit by {}", &chatter.name);
                         self.send_to_chat.send(message_to_chat).unwrap();
-                        self.winning_players.push(chatter);
+                        self.hitting_chatters.push(chatter);
                     }
 
                     if self
@@ -226,7 +227,11 @@ impl EventHandler for GameState {
                     if let Some(credits) = &mut self.credits {
                         credits.update();
                     } else {
-                        self.credits = Some(Credits::new()?);
+                        self.credits = Some(Credits::new(
+                            self.running_state,
+                            context,
+                            &self.hitting_chatters,
+                        )?);
                     }
                 }
             }
@@ -246,13 +251,17 @@ impl EventHandler for GameState {
         self.interface.draw(
             context,
             screen_size,
-            &self.winning_players,
+            &self.hitting_chatters,
             &self.teammates,
             &self.running_state,
         )?;
 
         let fps = ggez::timer::fps(context);
         println!("fps: {}", fps);
+
+        if let Some(credits) = &self.credits {
+            credits.draw(context)?;
+        }
 
         graphics::present(context)
     }
