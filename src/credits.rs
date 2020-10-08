@@ -18,11 +18,11 @@ impl Credits {
     pub fn new(
         running_state: RunningState,
         context: &mut Context,
+        screen_size: (f32, f32),
         hitting_chatters: &Vec<Chatter>,
     ) -> GameResult<Self> {
         // todo - rewrite create functions to be one function, and then add in all the chatters
         let mut all_credits = vec![];
-        let screen_size = graphics::drawable_size(context);
         let did_chat_win = matches!(running_state, RunningState::ChatWon);
         all_credits.push(Self::create_game_over_text(context, screen_size));
         if !did_chat_win {
