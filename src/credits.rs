@@ -1,3 +1,5 @@
+use super::utilities;
+use crate::{chatter::Chatter, running_state::RunningState};
 use ggez::{
     graphics::DrawParam,
     graphics::Font,
@@ -6,11 +8,13 @@ use ggez::{
     nalgebra::Point2,
     Context, GameResult,
 };
+use rand::prelude::*;
+use rand::seq::IteratorRandom;
+use std::{fs::File, path::Path};
 
-use crate::{chatter::Chatter, running_state::RunningState};
+const VELOCITY_Y: f32 = -5.0;
 
 pub struct Credits {
-    velocity_y: f32,
     all_credits: Vec<(Text, Point2<f32>)>,
 }
 
@@ -21,7 +25,16 @@ impl Credits {
         screen_size: (f32, f32),
         hitting_chatters: &Vec<Chatter>,
     ) -> GameResult<Self> {
-        // todo - rewrite create functions to be one function, and then add in all the chatters
+        let mut rng = thread_rng();
+        let streamer_won_message =
+            if let Some(messages) = utilities::load_messages("streamer_wins_messages.txt") {
+                messages
+                    .choose(&mut rng)
+                    .unwrap_or("Streamer won!".to_owned())
+            } else {
+                "Streamer won!".to_owned()
+            };
+
         let mut all_credits = vec![];
         let did_chat_win = matches!(running_state, RunningState::ChatWon);
         all_credits.push(Self::create_game_over_text(context, screen_size));
@@ -29,17 +42,14 @@ impl Credits {
             Self::create_credit(
                 context,
                 screen_size,
-                "The streamer clearly is the best at this",
+                &streamer_won_message,
                 Some(100.0),
                 0,
                 &mut all_credits,
             );
         }
 
-        Ok(Credits {
-            velocity_y: -1.0,
-            all_credits,
-        })
+        Ok(Credits { all_credits })
     }
 
     fn create_credit(
@@ -77,7 +87,7 @@ impl Credits {
 
     pub fn update(&mut self) {
         for credit in &mut self.all_credits {
-            credit.1.y += self.velocity_y;
+            credit.1.y += VELOCITY_Y;
         }
 
         self.all_credits.retain(|credit| credit.1.y > -100.0);

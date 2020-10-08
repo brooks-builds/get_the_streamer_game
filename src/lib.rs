@@ -9,6 +9,7 @@ mod life_system;
 mod physics;
 mod running_state;
 mod sprites;
+mod utilities;
 
 use chatter::Chatter;
 use command::Command;
@@ -183,7 +184,10 @@ impl EventHandler for GameState {
                         }
                     }
 
-                    let arena_size = (self.screen_size.0 - self.interface.width, self.screen_size.1);
+                    let arena_size = (
+                        self.screen_size.0 - self.interface.width,
+                        self.screen_size.1,
+                    );
 
                     let collidable_game_objects: Vec<GameObject> = self
                         .game_objects
