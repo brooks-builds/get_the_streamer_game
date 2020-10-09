@@ -1,7 +1,7 @@
 use std::io::{prelude::*, BufReader, Lines};
 use std::{fs::File, path::Path};
 
-pub fn load_messages(file_name: impl AsRef<Path>) -> Option<impl Iterator<Item = Option<String>>> {
+pub fn load_messages(file_name: impl AsRef<Path>) -> Option<impl Iterator<Item = String>> {
     Some(
         BufReader::new(get_resource(file_name)?)
             .lines()

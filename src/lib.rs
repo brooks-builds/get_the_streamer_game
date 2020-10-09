@@ -30,7 +30,7 @@ use std::time::Duration;
 use twitch_chat_wrapper::chat_message::ChatMessage;
 
 pub const DROP_ZONE_COUNT: u8 = 10;
-const GAME_TIME: Duration = Duration::from_secs(5);
+const GAME_TIME: Duration = Duration::from_secs(120);
 const LIVES: u8 = 3;
 
 pub struct GameState {
@@ -237,6 +237,7 @@ impl EventHandler for GameState {
                             context,
                             self.screen_size,
                             &self.hitting_chatters,
+                            &self.teammates,
                         )?);
                     }
                 }
