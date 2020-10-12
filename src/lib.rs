@@ -128,7 +128,13 @@ impl GameState {
                 context,
             )?);
             if !self.teammates.contains(&chatter) {
-                self.teammates.push(chatter);
+                if !self
+                    .teammates
+                    .iter()
+                    .any(|teammate_chatter| teammate_chatter.name == chatter.name)
+                {
+                    self.teammates.push(chatter);
+                }
             }
         }
         Ok(())
@@ -138,6 +144,16 @@ impl GameState {
         self.game_objects
             .iter()
             .find(|game_object| game_object.my_type == GameObjectType::Player)
+    }
+
+    /// Remove chatters from teammates that also hit the streamer
+    fn remove_hitting_teammates(&mut self) {
+        let hitters = self.hitting_chatters.clone();
+        self.teammates.retain(|teammate_chatter| {
+            !hitters
+                .iter()
+                .any(|hitting_chatter| hitting_chatter.name == teammate_chatter.name)
+        });
     }
 }
 impl EventHandler for GameState {
@@ -216,7 +232,13 @@ impl EventHandler for GameState {
                     if let Ok(chatter) = self.player_hit_object_event.try_recv() {
                         let message_to_chat = format!("The streamer was hit by {}", &chatter.name);
                         self.send_to_chat.send(message_to_chat).unwrap();
-                        self.hitting_chatters.push(chatter);
+                        if !self
+                            .hitting_chatters
+                            .iter()
+                            .any(|hitting_chatter| chatter.name == hitting_chatter.name)
+                        {
+                            self.hitting_chatters.push(chatter);
+                        }
                     }
 
                     if self
@@ -230,8 +252,11 @@ impl EventHandler for GameState {
                 }
                 RunningState::ChatWon | RunningState::PlayerWon => {
                     if let Some(credits) = &mut self.credits {
-                        credits.update();
+                        if !credits.update() {
+                            ggez::event::quit(context);
+                        }
                     } else {
+                        self.remove_hitting_teammates();
                         self.credits = Some(Credits::new(
                             self.running_state,
                             context,

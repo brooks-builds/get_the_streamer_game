@@ -65,25 +65,47 @@ impl Credits {
             )
         });
 
+        if teammates.len() > 0 {
+            Self::create_credit(
+                context,
+                screen_size,
+                "With teammates",
+                None,
+                &mut all_credits,
+                &mut credit_y,
+            );
+
+            teammates.iter().for_each(|chatter| {
+                Self::create_credit(
+                    context,
+                    screen_size,
+                    &chatter.name,
+                    None,
+                    &mut all_credits,
+                    &mut credit_y,
+                )
+            });
+        }
+
         Self::create_credit(
             context,
             screen_size,
-            "With teammates",
+            "Built Live on Twitch at https://www.twitch.tv/brookzerker",
             None,
             &mut all_credits,
             &mut credit_y,
         );
 
-        teammates.iter().for_each(|chatter| {
-            Self::create_credit(
-                context,
-                screen_size,
-                &chatter.name,
-                None,
-                &mut all_credits,
-                &mut credit_y,
-            )
-        });
+        Self::create_credit(
+            context,
+            screen_size,
+            "With many thanks to",
+            None,
+            &mut all_credits,
+            &mut credit_y,
+        );
+
+        // put in the contributors on GitHub
 
         Ok(Credits { all_credits })
     }
@@ -130,12 +152,14 @@ impl Credits {
         (game_over_text, game_over_location)
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self) -> bool {
         for credit in &mut self.all_credits {
             credit.1.y += VELOCITY_Y;
         }
 
         self.all_credits.retain(|credit| credit.1.y > -100.0);
+
+        self.all_credits.len() > 0
     }
 
     pub fn draw(&self, context: &mut Context) -> GameResult<()> {
