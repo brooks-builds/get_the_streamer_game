@@ -42,15 +42,20 @@ impl PhysicsSystem for SwordPhysics {
         location.y += self.velocity_y;
         location.x += self.velocity_x;
         *rotation = self.calculate_rotation();
-        if location.y + location.h > screen_size.1 {
-            location.y = screen_size.1 - location.h;
-            self.velocity_y *= -0.9;
 
-            if self.is_first_fall() {
-                self.velocity_x = rand::random::<f32>() * 15.0;
-            }
+        if let Some(sword_life_system) = life_system.as_deref_mut() {
+            if sword_life_system.get_lives_left() > 1 {
+                if location.y + location.h > screen_size.1 {
+                    location.y = screen_size.1 - location.h;
+                    self.velocity_y *= -0.9;
 
-            if let Some(sword_life_system) = life_system.as_deref_mut() {
+                    if self.is_first_fall() {
+                        self.velocity_x = rand::random::<f32>() * 15.0;
+                    }
+
+                    sword_life_system.hit();
+                }
+            } else if location.y > screen_size.1 {
                 sword_life_system.hit();
             }
         }
