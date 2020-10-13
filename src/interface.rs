@@ -1,6 +1,6 @@
 use crate::running_state::RunningState;
 
-use super::{Chatter, GameObject};
+use super::GameObject;
 use eyre::Result;
 use ggez::graphics::{
     Align, Color, DrawMode, DrawParam, Font, Mesh, MeshBuilder, Rect, Scale, Text,
@@ -35,7 +35,6 @@ impl Interface {
         let instruction_image = Image::new(context, "/sidebar.png")?;
         let width = instruction_image.width().into();
         let (screen_width, screen_height) = screen_size;
-        let margin = 100.0;
         let mut drop_zones = vec![];
         let drop_zone_width = screen_width - width;
         let single_drop_zone_width = drop_zone_width / crate::DROP_ZONE_COUNT as f32;
@@ -92,11 +91,6 @@ impl Interface {
 
         let mut game_over_title = Text::new("Game Over!");
         game_over_title.set_font(Font::default(), Scale::uniform(50.0));
-        let game_over_title_width = game_over_title.width(context) as f32;
-        let game_over_title_location = Point2::new(
-            screen_width / 2.0 - game_over_title_width / 2.0,
-            screen_height,
-        );
 
         Ok(Interface {
             width,
@@ -116,8 +110,6 @@ impl Interface {
         &mut self,
         context: &mut Context,
         screen_size: (f32, f32),
-        winning_players: &Vec<Chatter>,
-        teammates: &Vec<Chatter>,
         running_state: &RunningState,
     ) -> GameResult<()> {
         self.draw_drop_zones(context)?;
@@ -194,12 +186,7 @@ impl Interface {
         self.game_objects.push(game_object);
     }
 
-    pub fn update(
-        &mut self,
-        context: &mut Context,
-        player_lives_left: u8,
-        running_state: &RunningState,
-    ) -> Result<()> {
+    pub fn update(&mut self, context: &mut Context, player_lives_left: u8) -> Result<()> {
         let time_since_start = timer::time_since_start(context);
         let screen_size = self.screen_size;
         let collidable_game_objects = vec![];
@@ -214,14 +201,6 @@ impl Interface {
             )
         })?;
 
-        Ok(())
-    }
-
-    fn draw_player_lives_left(
-        &self,
-        context: &mut Context,
-        screen_size: (f32, f32),
-    ) -> GameResult<()> {
         Ok(())
     }
 }

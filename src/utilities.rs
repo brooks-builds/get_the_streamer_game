@@ -1,4 +1,4 @@
-use std::io::{prelude::*, BufReader, Lines};
+use std::io::{prelude::*, BufReader};
 use std::{fs::File, path::Path};
 
 pub fn load_messages(file_name: impl AsRef<Path>) -> Option<impl Iterator<Item = String>> {

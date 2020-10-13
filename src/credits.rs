@@ -10,10 +10,10 @@ use ggez::{
 };
 use rand::prelude::*;
 use rand::seq::IteratorRandom;
-use std::{fs::File, path::Path};
 
-const VELOCITY_Y: f32 = -5.0;
+const VELOCITY_Y: f32 = -2.5;
 const DEFAULT_STREAMER_WIN_MESSAGE: &str = "Streamer won!";
+const CONTRIBUTORS: [&'static str; 4] = ["brookspatton", "dmb1107", "LordMZTE", "MeirKlemp"];
 
 pub struct Credits {
     all_credits: Vec<(Text, Point2<f32>)>,
@@ -45,6 +45,7 @@ impl Credits {
             &mut all_credits,
             &mut credit_y,
         );
+        Self::create_space(context, screen_size, &mut all_credits, &mut credit_y);
         Self::create_credit(
             context,
             screen_size,
@@ -64,6 +65,8 @@ impl Credits {
                 &mut credit_y,
             )
         });
+
+        Self::create_space(context, screen_size, &mut all_credits, &mut credit_y);
 
         if teammates.len() > 0 {
             Self::create_credit(
@@ -85,6 +88,7 @@ impl Credits {
                     &mut credit_y,
                 )
             });
+            Self::create_space(context, screen_size, &mut all_credits, &mut credit_y);
         }
 
         Self::create_credit(
@@ -96,16 +100,29 @@ impl Credits {
             &mut credit_y,
         );
 
+        Self::create_space(context, screen_size, &mut all_credits, &mut credit_y);
+
         Self::create_credit(
             context,
             screen_size,
-            "With many thanks to",
+            "Built By",
             None,
             &mut all_credits,
             &mut credit_y,
         );
 
-        // put in the contributors on GitHub
+        CONTRIBUTORS.iter().for_each(|&contributor| {
+            Self::create_credit(
+                context,
+                screen_size,
+                contributor,
+                None,
+                &mut all_credits,
+                &mut credit_y,
+            );
+        });
+
+        Self::create_space(context, screen_size, &mut all_credits, &mut credit_y);
 
         Ok(Credits { all_credits })
     }
@@ -123,7 +140,7 @@ impl Credits {
 
     fn create_credit(
         context: &mut Context,
-        (screen_width, screen_height): (f32, f32),
+        (screen_width, _): (f32, f32),
         title: &str,
         font_scale: Option<f32>,
         all_credits: &mut Vec<(Text, Point2<f32>)>,
@@ -150,6 +167,22 @@ impl Credits {
             screen_height / 2.0 - game_over_height as f32 / 2.0,
         );
         (game_over_text, game_over_location)
+    }
+
+    fn create_space(
+        context: &mut Context,
+        screen_size: (f32, f32),
+        all_credits: &mut Vec<(Text, Point2<f32>)>,
+        credit_y: &mut f32,
+    ) {
+        Self::create_credit(
+            context,
+            screen_size,
+            "---",
+            Some(100.0),
+            all_credits,
+            credit_y,
+        );
     }
 
     pub fn update(&mut self) -> bool {

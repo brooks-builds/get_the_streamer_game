@@ -43,7 +43,6 @@ pub struct GameState {
     player_hit_object_event: Receiver<Chatter>,
     hitting_chatters: Vec<Chatter>,
     teammates: Vec<Chatter>,
-    damage_cooldown: u8,
     running_state: RunningState,
     credits: Option<Credits>,
 }
@@ -110,7 +109,6 @@ impl GameState {
             hitting_chatters: vec![],
             player_hit_object_event: receive_player_hit_object_event,
             teammates: vec![],
-            damage_cooldown: 0,
             running_state: RunningState::Playing,
             credits: None,
         })
@@ -172,10 +170,7 @@ impl EventHandler for GameState {
                         self.running_state = RunningState::ChatWon;
                     }
 
-                    if let Err(error) =
-                        self.interface
-                            .update(context, lives_left, &self.running_state)
-                    {
+                    if let Err(error) = self.interface.update(context, lives_left) {
                         eprintln!("Error updating game objects in interface: {}", error);
                     }
 
@@ -278,13 +273,8 @@ impl EventHandler for GameState {
             game_object.draw(context)?;
         }
 
-        self.interface.draw(
-            context,
-            self.screen_size,
-            &self.hitting_chatters,
-            &self.teammates,
-            &self.running_state,
-        )?;
+        self.interface
+            .draw(context, self.screen_size, &self.running_state)?;
 
         let fps = ggez::timer::fps(context);
         println!("fps: {}", fps);

@@ -12,11 +12,4 @@ impl RunningState {
             RunningState::PlayerWon | RunningState::ChatWon => true,
         }
     }
-
-    pub fn did_chat_win(&self) -> bool {
-        match self {
-            RunningState::ChatWon => true,
-            _ => false,
-        }
-    }
 }
