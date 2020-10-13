@@ -23,12 +23,16 @@ fn main() {
                 Err(error) => panic!(error),
             };
 
-        let game_state = &mut GameState::new(send_to_twitch, receive_from_twitch, WINDOW_SIZE, context).unwrap();
+        let game_state =
+            &mut GameState::new(send_to_twitch, receive_from_twitch, WINDOW_SIZE, context).unwrap();
         match event::run(context, event_loop, game_state) {
             Ok(_) => println!("Thanks for playing!"),
             Err(error) => println!("Error occurred: {}", error),
         };
     });
-    twitchchat_thread.join().unwrap();
+    match twitchchat_thread.join() {
+        Ok(_) => println!("Thanks for playing!"),
+        Err(error) => eprintln!("error that crashed the game: {:?}", error),
+    }
     game_thread.join().unwrap();
 }

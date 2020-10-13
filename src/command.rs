@@ -37,7 +37,7 @@ impl Command {
                     id,
                     chatter,
                 })),
-                "#snake" => Ok(Some(Command {
+                "#snake" | "#snek" => Ok(Some(Command {
                     command_type: CommandType::Snake,
                     id,
                     chatter,

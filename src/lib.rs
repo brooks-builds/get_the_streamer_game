@@ -30,7 +30,7 @@ use std::time::Duration;
 use twitch_chat_wrapper::chat_message::ChatMessage;
 
 pub const DROP_ZONE_COUNT: u8 = 10;
-const GAME_TIME: Duration = Duration::from_secs(5);
+const GAME_TIME: Duration = Duration::from_secs(120);
 const LIVES: u8 = 3;
 
 pub struct GameState {
@@ -43,7 +43,6 @@ pub struct GameState {
     player_hit_object_event: Receiver<Chatter>,
     hitting_chatters: Vec<Chatter>,
     teammates: Vec<Chatter>,
-    damage_cooldown: u8,
     running_state: RunningState,
     credits: Option<Credits>,
 }
@@ -110,7 +109,6 @@ impl GameState {
             hitting_chatters: vec![],
             player_hit_object_event: receive_player_hit_object_event,
             teammates: vec![],
-            damage_cooldown: 0,
             running_state: RunningState::Playing,
             credits: None,
         })
@@ -128,7 +126,13 @@ impl GameState {
                 context,
             )?);
             if !self.teammates.contains(&chatter) {
-                self.teammates.push(chatter);
+                if !self
+                    .teammates
+                    .iter()
+                    .any(|teammate_chatter| teammate_chatter.name == chatter.name)
+                {
+                    self.teammates.push(chatter);
+                }
             }
         }
         Ok(())
@@ -138,6 +142,16 @@ impl GameState {
         self.game_objects
             .iter()
             .find(|game_object| game_object.my_type == GameObjectType::Player)
+    }
+
+    /// Remove chatters from teammates that also hit the streamer
+    fn remove_hitting_teammates(&mut self) {
+        let hitters = self.hitting_chatters.clone();
+        self.teammates.retain(|teammate_chatter| {
+            !hitters
+                .iter()
+                .any(|hitting_chatter| hitting_chatter.name == teammate_chatter.name)
+        });
     }
 }
 impl EventHandler for GameState {
@@ -156,10 +170,7 @@ impl EventHandler for GameState {
                         self.running_state = RunningState::ChatWon;
                     }
 
-                    if let Err(error) =
-                        self.interface
-                            .update(context, lives_left, &self.running_state)
-                    {
+                    if let Err(error) = self.interface.update(context, lives_left) {
                         eprintln!("Error updating game objects in interface: {}", error);
                     }
 
@@ -216,7 +227,13 @@ impl EventHandler for GameState {
                     if let Ok(chatter) = self.player_hit_object_event.try_recv() {
                         let message_to_chat = format!("The streamer was hit by {}", &chatter.name);
                         self.send_to_chat.send(message_to_chat).unwrap();
-                        self.hitting_chatters.push(chatter);
+                        if !self
+                            .hitting_chatters
+                            .iter()
+                            .any(|hitting_chatter| chatter.name == hitting_chatter.name)
+                        {
+                            self.hitting_chatters.push(chatter);
+                        }
                     }
 
                     if self
@@ -230,13 +247,17 @@ impl EventHandler for GameState {
                 }
                 RunningState::ChatWon | RunningState::PlayerWon => {
                     if let Some(credits) = &mut self.credits {
-                        credits.update();
+                        if !credits.update() {
+                            ggez::event::quit(context);
+                        }
                     } else {
+                        self.remove_hitting_teammates();
                         self.credits = Some(Credits::new(
                             self.running_state,
                             context,
                             self.screen_size,
                             &self.hitting_chatters,
+                            &self.teammates,
                         )?);
                     }
                 }
@@ -252,13 +273,8 @@ impl EventHandler for GameState {
             game_object.draw(context)?;
         }
 
-        self.interface.draw(
-            context,
-            self.screen_size,
-            &self.hitting_chatters,
-            &self.teammates,
-            &self.running_state,
-        )?;
+        self.interface
+            .draw(context, self.screen_size, &self.running_state)?;
 
         let fps = ggez::timer::fps(context);
         println!("fps: {}", fps);

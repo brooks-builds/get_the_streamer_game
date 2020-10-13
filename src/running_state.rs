@@ -1,4 +1,4 @@
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum RunningState {
     Playing,
     PlayerWon,
@@ -10,13 +10,6 @@ impl RunningState {
         match self {
             RunningState::Playing => false,
             RunningState::PlayerWon | RunningState::ChatWon => true,
-        }
-    }
-
-    pub fn did_chat_win(&self) -> bool {
-        match self {
-            RunningState::ChatWon => true,
-            _ => false,
         }
     }
 }
