@@ -10,7 +10,7 @@ const WINDOW_SIZE: (f32, f32) = (1920.0, 1080.0);
 fn main() {
     let (send_to_game, receive_from_twitch) = channel::<ChatMessage>();
     let (send_to_twitch, receive_from_game) = channel::<String>();
-    let twitchchat_thread = thread::spawn(move || {
+    let _twitchchat_thread = thread::spawn(move || {
         twitch_chat_wrapper::run(receive_from_game, send_to_game).unwrap();
     });
     let game_thread = thread::spawn(move || {
@@ -30,9 +30,6 @@ fn main() {
             Err(error) => println!("Error occurred: {}", error),
         };
     });
-    match twitchchat_thread.join() {
-        Ok(_) => println!("Thanks for playing!"),
-        Err(error) => eprintln!("error that crashed the game: {:?}", error),
-    }
+
     game_thread.join().unwrap();
 }
