@@ -4,7 +4,6 @@ use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
 
 const TIMER_WIDTH: f32 = 5.0;
-const TIMER_COLOR: Color = Color::new(1.0, 0.0, 0.0, 1.0);
 
 #[derive(Debug)]
 pub struct TimerDrawSystem {
@@ -17,12 +16,13 @@ impl TimerDrawSystem {
     pub fn new(
         (_screen_width, screen_height): (f32, f32),
         context: &mut Context,
+        (red, green, blue): (f32, f32, f32),
     ) -> GameResult<TimerDrawSystem> {
         let timer = MeshBuilder::new()
             .rectangle(
                 DrawMode::fill(),
                 Rect::new(0.0, 0.0, TIMER_WIDTH, screen_height),
-                TIMER_COLOR,
+                Color::new(red, green, blue, 1.0),
             )
             .build(context)?;
 
