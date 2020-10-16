@@ -1,5 +1,6 @@
 #[derive(Clone, Copy, PartialEq)]
 pub enum RunningState {
+    StartingSoon,
     Playing,
     PlayerWon,
     ChatWon,
@@ -8,7 +9,7 @@ pub enum RunningState {
 impl RunningState {
     pub fn is_game_over(&self) -> bool {
         match self {
-            RunningState::Playing => false,
+            RunningState::Playing | RunningState::StartingSoon => false,
             RunningState::PlayerWon | RunningState::ChatWon => true,
         }
     }

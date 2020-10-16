@@ -8,6 +8,7 @@ mod interface;
 mod life_system;
 mod physics;
 mod running_state;
+mod splash;
 mod sprites;
 mod utilities;
 
@@ -24,27 +25,34 @@ use interface::Interface;
 use life_system::{LifeSystem, PlayerLifeSystem};
 use physics::{PhysicsSystem, PlayerPhysics, TimerPhysicsSystem};
 use running_state::RunningState;
+use splash::Splash;
 use sprites::Sprite;
-use std::sync::mpsc::{channel, Receiver, Sender};
 use std::time::Duration;
+use std::{
+    sync::mpsc::{channel, Receiver, Sender},
+    time::Instant,
+};
 use twitch_chat_wrapper::chat_message::ChatMessage;
 
 pub const DROP_ZONE_COUNT: u8 = 10;
 const GAME_TIME: Duration = Duration::from_secs(120);
+const SPLASH_DURATION: Duration = Duration::from_secs(25);
 const LIVES: u8 = 3;
+const FRAMERATE_TARGET: u32 = 60;
 
 pub struct GameState {
     send_to_chat: Sender<String>,
     receive_from_chat: Receiver<ChatMessage>,
     screen_size: (f32, f32),
     interface: Interface,
-    framerate_target: u32,
     game_objects: Vec<GameObject>,
     player_hit_object_event: Receiver<Chatter>,
     hitting_chatters: Vec<Chatter>,
     teammates: Vec<Chatter>,
     running_state: RunningState,
     credits: Option<Credits>,
+    splash: Splash,
+    game_start_time: Instant,
 }
 
 impl GameState {
@@ -56,25 +64,15 @@ impl GameState {
     ) -> GameResult<GameState> {
         send_to_chat.send("Chat vs. Streamer game started! Use the commands on screen to drop objects that the streamer will attempt to avoid".to_owned()).unwrap();
         let mut interface = Interface::new(context, screen_size, LIVES)?;
-        let framerate_target = 60;
 
         // create timer block
-        let timer_draw_system = TimerDrawSystem::new(screen_size, context)?;
-        let timer_size = timer_draw_system.get_size().unwrap_or((5.0, screen_size.1));
-        let timer_physics_system =
-            TimerPhysicsSystem::new(timer_size.1, GAME_TIME, framerate_target as f32);
-        let timer_game_object = GameObject::new(
-            screen_size.0 - interface.width,
-            0.0,
-            Some(Box::new(timer_draw_system)),
-            timer_size.0,
-            timer_size.1,
-            Some(Box::new(timer_physics_system)),
-            false,
-            None,
-            GameObjectType::Interface,
-            None,
-        );
+        let timer_game_object = Self::create_timer(
+            screen_size,
+            context,
+            interface.width,
+            SPLASH_DURATION,
+            (0.0, 1.0, 0.0),
+        )?;
         interface.add_game_object(timer_game_object);
 
         // create player
@@ -98,19 +96,26 @@ impl GameState {
         );
 
         let game_objects = vec![player];
+        let splash = Splash::new(
+            (screen_size.0 - interface.width, screen_size.1),
+            context,
+            SPLASH_DURATION,
+        );
+        let game_start_time = Instant::now();
 
         Ok(GameState {
             send_to_chat,
             receive_from_chat,
             screen_size,
             interface,
-            framerate_target,
             game_objects,
             hitting_chatters: vec![],
             player_hit_object_event: receive_player_hit_object_event,
             teammates: vec![],
-            running_state: RunningState::Playing,
+            running_state: RunningState::StartingSoon,
             credits: None,
+            splash,
+            game_start_time,
         })
     }
 
@@ -153,11 +158,54 @@ impl GameState {
                 .any(|hitting_chatter| hitting_chatter.name == teammate_chatter.name)
         });
     }
+
+    fn create_timer(
+        screen_size: (f32, f32),
+        context: &mut Context,
+        interface_width: f32,
+        duration: Duration,
+        color: (f32, f32, f32),
+    ) -> GameResult<GameObject> {
+        let timer_draw_system = TimerDrawSystem::new(screen_size, context, color)?;
+        let timer_size = timer_draw_system.get_size().unwrap_or((5.0, screen_size.1));
+        let timer_physics_system =
+            TimerPhysicsSystem::new(timer_size.1, duration, FRAMERATE_TARGET as f32);
+        let timer_game_object = GameObject::new(
+            screen_size.0 - interface_width,
+            0.0,
+            Some(Box::new(timer_draw_system)),
+            timer_size.0,
+            timer_size.1,
+            Some(Box::new(timer_physics_system)),
+            false,
+            None,
+            GameObjectType::Interface,
+            None,
+        );
+        Ok(timer_game_object)
+    }
 }
 impl EventHandler for GameState {
     fn update(&mut self, context: &mut Context) -> GameResult {
-        while timer::check_update_time(context, self.framerate_target) {
+        while timer::check_update_time(context, FRAMERATE_TARGET) {
             match self.running_state {
+                RunningState::StartingSoon => {
+                    if let Err(error) = self.interface.update(context, LIVES) {
+                        eprintln!("Error updating game objects in interface: {}", error);
+                    }
+                    if self.splash.is_done() {
+                        self.running_state = RunningState::Playing;
+                        let timer = Self::create_timer(
+                            self.screen_size,
+                            context,
+                            self.interface.width,
+                            GAME_TIME,
+                            (1.0, 0.0, 0.0),
+                        )?;
+                        self.interface.add_game_object(timer);
+                        self.game_start_time = Instant::now();
+                    }
+                }
                 RunningState::Playing => {
                     // get the player lives left
                     let lives_left = if let Some(player) = self.get_player() {
@@ -175,7 +223,7 @@ impl EventHandler for GameState {
                     }
 
                     let game_time_left =
-                        GAME_TIME.as_secs() - timer::time_since_start(context).as_secs();
+                        GAME_TIME.as_secs() - self.game_start_time.elapsed().as_secs();
                     if game_time_left == 0 {
                         self.running_state = RunningState::PlayerWon;
                     }
@@ -269,18 +317,21 @@ impl EventHandler for GameState {
     fn draw(&mut self, context: &mut Context) -> GameResult {
         graphics::clear(context, BLACK);
 
-        for game_object in self.game_objects.iter() {
-            game_object.draw(context)?;
-        }
-
         self.interface
             .draw(context, self.screen_size, &self.running_state)?;
 
-        let fps = ggez::timer::fps(context);
-        println!("fps: {}", fps);
-
-        if let Some(credits) = &self.credits {
-            credits.draw(context)?;
+        match self.running_state {
+            RunningState::StartingSoon => self.splash.draw(context)?,
+            RunningState::Playing => {
+                for game_object in self.game_objects.iter() {
+                    game_object.draw(context)?;
+                }
+            }
+            RunningState::PlayerWon | RunningState::ChatWon => {
+                if let Some(credits) = &self.credits {
+                    credits.draw(context)?;
+                }
+            }
         }
 
         graphics::present(context)
