@@ -47,4 +47,8 @@ impl PhysicsSystem for FirePhysics {
 
         Ok(())
     }
+
+    fn get_velocity_x(&self) -> f32 {
+        self.velocity.x
+    }
 }

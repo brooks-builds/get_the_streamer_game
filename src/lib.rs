@@ -36,7 +36,7 @@ use twitch_chat_wrapper::chat_message::ChatMessage;
 
 pub const DROP_ZONE_COUNT: u8 = 10;
 const GAME_TIME: Duration = Duration::from_secs(120);
-const SPLASH_DURATION: Duration = Duration::from_secs(25);
+const SPLASH_DURATION: Duration = Duration::from_secs(10);
 const LIVES: u8 = 3;
 const FRAMERATE_TARGET: u32 = 60;
 
@@ -78,7 +78,7 @@ impl GameState {
         // create player
         let player_scale = 4.0;
         let player_forward_sprite = Sprite::new(context, "/player_forward.png", 8, 1)?;
-        let player_left_sprite = Sprite::new(context, "/player_left.png", 8, 1)?;
+        let player_left_sprite = Sprite::new(context, "/player_left.png", 1, 1)?;
         let player_draw_system =
             PlayerDrawSystem::new(player_left_sprite, player_forward_sprite, player_scale);
         let player_size = player_draw_system.get_size().unwrap_or((50.0, 50.0));

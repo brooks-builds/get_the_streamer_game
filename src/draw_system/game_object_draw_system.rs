@@ -41,7 +41,13 @@ impl DrawSystem for GameObjectDrawSystem {
 
     fn draw(&self, context: &mut Context, location: Point2<f32>, rotation: &f32) -> GameResult<()> {
         if let Some(sprite) = &self.sprite {
-            sprite.draw(context, location, self.scale_by, rotation, None)?;
+            sprite.draw(
+                context,
+                location,
+                [self.scale_by, self.scale_by],
+                rotation,
+                None,
+            )?;
         }
 
         let size = self.get_size().unwrap_or((50.0, 50.0));
