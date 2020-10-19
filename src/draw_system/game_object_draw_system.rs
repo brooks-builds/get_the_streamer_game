@@ -33,19 +33,13 @@ impl GameObjectDrawSystem {
 }
 
 impl DrawSystem for GameObjectDrawSystem {
-    fn update(&mut self, time_since_start: std::time::Duration) {
+    fn update(&mut self, time_since_start: std::time::Duration, _velocity_x: f32) {
         if let Some(sprite) = &mut self.sprite {
             sprite.update(time_since_start);
         }
     }
 
-    fn draw(
-        &self,
-        context: &mut Context,
-        location: Point2<f32>,
-        rotation: &f32,
-    ) -> GameResult<()> {
-        dbg!(&location);
+    fn draw(&self, context: &mut Context, location: Point2<f32>, rotation: &f32) -> GameResult<()> {
         if let Some(sprite) = &self.sprite {
             sprite.draw(context, location, self.scale_by, rotation, None)?;
         }

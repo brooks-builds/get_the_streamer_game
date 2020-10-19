@@ -15,7 +15,7 @@ mod utilities;
 use chatter::Chatter;
 use command::Command;
 use credits::Credits;
-use draw_system::{DrawSystem, GameObjectDrawSystem, TimerDrawSystem};
+use draw_system::{DrawSystem, GameObjectDrawSystem, PlayerDrawSystem, TimerDrawSystem};
 use game_object::GameObject;
 use game_object_type::GameObjectType;
 use ggez::event::EventHandler;
@@ -77,8 +77,10 @@ impl GameState {
 
         // create player
         let player_scale = 4.0;
-        let player_sprite = Sprite::new(context, "/PlayerCharacter.png", 24, 1)?;
-        let player_draw_system = GameObjectDrawSystem::new(Some(player_sprite), None, player_scale);
+        let player_forward_sprite = Sprite::new(context, "/player_forward.png", 8, 1)?;
+        let player_left_sprite = Sprite::new(context, "/player_left.png", 8, 1)?;
+        let player_draw_system =
+            PlayerDrawSystem::new(player_left_sprite, player_forward_sprite, player_scale);
         let player_size = player_draw_system.get_size().unwrap_or((50.0, 50.0));
         let (send_player_hit_object_event, receive_player_hit_object_event) = channel();
         let player_physics_system = PlayerPhysics::new(send_player_hit_object_event);

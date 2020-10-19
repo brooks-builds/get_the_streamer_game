@@ -35,7 +35,7 @@ impl TimerDrawSystem {
 }
 
 impl DrawSystem for TimerDrawSystem {
-    fn update(&mut self, _time_since_start: std::time::Duration) {}
+    fn update(&mut self, _time_since_start: std::time::Duration, _velocity_x: f32) {}
 
     fn draw(
         &self,
