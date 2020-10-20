@@ -15,7 +15,7 @@ mod utilities;
 use chatter::Chatter;
 use command::Command;
 use credits::Credits;
-use draw_system::{DrawSystem, GameObjectDrawSystem, PlayerDrawSystem, TimerDrawSystem};
+use draw_system::{DrawSystem, PlayerDrawSystem, TimerDrawSystem};
 use game_object::GameObject;
 use game_object_type::GameObjectType;
 use ggez::event::EventHandler;
@@ -36,7 +36,7 @@ use twitch_chat_wrapper::chat_message::ChatMessage;
 
 pub const DROP_ZONE_COUNT: u8 = 10;
 const GAME_TIME: Duration = Duration::from_secs(120);
-const SPLASH_DURATION: Duration = Duration::from_secs(10);
+const SPLASH_DURATION: Duration = Duration::from_secs(15);
 const LIVES: u8 = 3;
 const FRAMERATE_TARGET: u32 = 60;
 

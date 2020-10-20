@@ -13,7 +13,8 @@ use rand::seq::IteratorRandom;
 
 const VELOCITY_Y: f32 = -2.5;
 const DEFAULT_STREAMER_WIN_MESSAGE: &str = "Streamer won!";
-const CONTRIBUTORS: [&'static str; 4] = ["brookspatton", "dmb1107", "LordMZTE", "MeirKlemp"];
+const CONTRIBUTORS: [&'static str; 5] =
+    ["brookspatton", "dmb1107", "LordMZTE", "MeirKlemp", "ootsby"];
 
 pub struct Credits {
     all_credits: Vec<(Text, Point2<f32>)>,
@@ -66,9 +67,8 @@ impl Credits {
             )
         });
 
-        Self::create_space(context, screen_size, &mut all_credits, &mut credit_y);
-
-        if teammates.len() > 0 {
+        if teammates.len() > 0 && matches!(running_state, RunningState::ChatWon) {
+            Self::create_space(context, screen_size, &mut all_credits, &mut credit_y);
             Self::create_credit(
                 context,
                 screen_size,
