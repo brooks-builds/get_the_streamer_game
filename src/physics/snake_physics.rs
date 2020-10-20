@@ -82,4 +82,8 @@ impl PhysicsSystem for SnakePhysics {
         }
         Ok(())
     }
+
+    fn get_velocity_x(&self) -> f32 {
+        self.velocity_x
+    }
 }
