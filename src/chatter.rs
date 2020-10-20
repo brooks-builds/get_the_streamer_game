@@ -4,10 +4,11 @@ pub struct Chatter {
     pub red: u8,
     pub green: u8,
     pub blue: u8,
+    pub is_subscriber: bool,
 }
 
 impl Chatter {
-    pub fn new(name: String, color: (u8, u8, u8)) -> Chatter {
+    pub fn new(name: String, color: (u8, u8, u8), is_subscriber: bool) -> Chatter {
         let (red, green, blue) = if color.0 == 0 && color.1 == 0 && color.2 == 0 {
             (100, 100, 100)
         } else {
@@ -19,6 +20,7 @@ impl Chatter {
             red,
             green,
             blue,
+            is_subscriber,
         }
     }
 }
