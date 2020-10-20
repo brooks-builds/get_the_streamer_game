@@ -65,8 +65,7 @@ impl Sprite {
         location: Point2<f32>,
         scale_by: [f32; 2],
         rotation: &f32,
-        opacity: Option<f32>,
-        mirror_x: bool,
+        opacity: Option<f32>
     ) -> GameResult<()> {
         let opacity = opacity.unwrap_or(1.0);
         let scale_by_y = if *rotation > 3.0 {
@@ -80,7 +79,7 @@ impl Sprite {
             DrawParam::new()
                 .src(self.individual_sprite_rects[self.rect_index])
                 .dest(Point2::new(
-                    location.x + (self.width * scale_by[0] / 2.0),
+                    location.x + (self.width * scale_by[0].abs() / 2.0),
                     location.y + (self.height * scale_by[1] / 2.0),
                 ))
                 .offset(Point2::new(0.5, 0.5))
