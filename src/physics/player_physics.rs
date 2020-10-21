@@ -99,7 +99,7 @@ impl PhysicsSystem for PlayerPhysics {
                         let chatter = if let Some(chatter) = game_object.chatter {
                             chatter
                         } else {
-                            Chatter::new(DEFAULT_CHATTER_NAME.to_owned(), (255, 255, 255))
+                            Chatter::new(DEFAULT_CHATTER_NAME.to_owned(), (255, 255, 255), false)
                         };
                         self.player_hit_object.send(chatter)?;
                     }

@@ -238,7 +238,11 @@ impl EventHandler for GameState {
                         };
                         match Command::new(
                             &chat_message.message,
-                            Chatter::new(chatter_name, chat_message.color_rgb),
+                            Chatter::new(
+                                chatter_name,
+                                chat_message.color_rgb,
+                                chat_message.subscriber,
+                            ),
                         ) {
                             Err(error) => self.send_to_chat.send(error.to_owned()).unwrap(),
                             Ok(command) => self.handle_command(command, context)?,
