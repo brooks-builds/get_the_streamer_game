@@ -1,4 +1,4 @@
-use ggez::{graphics::Color, nalgebra::Point2, Context, GameResult};
+use ggez::{nalgebra::Point2, Context, GameResult};
 use rand::prelude::*;
 
 use crate::{
@@ -79,10 +79,12 @@ impl Command {
     ) -> GameResult<GameObject> {
         let scale = self.get_scale();
         let sprite = self.get_sprite(context)?;
-        let label = Some((
-            self.chatter.name.clone(),
-            Color::from_rgba(self.chatter.red, self.chatter.green, self.chatter.blue, 1),
-        ));
+        let label_color = if self.chatter.is_subscriber {
+            self.chatter.get_color()
+        } else {
+            ggez::graphics::WHITE
+        };
+        let label = Some((self.chatter.name.clone(), label_color));
         let draw_system = GameObjectDrawSystem::new(Some(sprite), label, scale);
         let size = draw_system.get_size().unwrap_or((50.0, 50.0));
         let physics_system = self.get_physics();

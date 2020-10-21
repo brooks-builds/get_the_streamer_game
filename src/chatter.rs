@@ -1,3 +1,5 @@
+use ggez::graphics::Color;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Chatter {
     pub name: String,
@@ -22,5 +24,9 @@ impl Chatter {
             blue,
             is_subscriber,
         }
+    }
+
+    pub fn get_color(&self) -> Color {
+        Color::from_rgba(self.red, self.green, self.blue, 255)
     }
 }

@@ -1,5 +1,5 @@
 use super::{DrawSystem, Sprite};
-use ggez::graphics::{Color, DrawParam, Font, Scale, Text};
+use ggez::graphics::{Color, DrawParam, Font, Scale, Text, TextFragment};
 use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
 
@@ -16,18 +16,14 @@ impl GameObjectDrawSystem {
         label: Option<(String, Color)>,
         scale_by: f32,
     ) -> GameObjectDrawSystem {
-        let label = match label {
-            Some((text, color)) => {
-                let mut text = Text::new(text);
-                text.set_font(Font::default(), Scale::uniform(35.0));
-                let fragment = &mut text.fragments_mut();
-                fragment.iter_mut().for_each(|fragment| {
-                    fragment.color(color);
-                });
-                Some(text)
-            }
-            None => None,
-        };
+        let label = label.map(|(text, color)| {
+            Text::new(
+                TextFragment::new(text)
+                    .font(Font::default())
+                    .scale(Scale::uniform(35.0))
+                    .color(color),
+            )
+        });
         GameObjectDrawSystem {
             sprite,
             label,
