@@ -4,15 +4,20 @@ use ggez::{event, ContextBuilder};
 use std::sync::mpsc::channel;
 use std::thread;
 use twitch_chat_wrapper::chat_message::ChatMessage;
+mod chat_test_mock;
 
 const WINDOW_SIZE: (f32, f32) = (1920.0, 1080.0);
 
 fn main() {
     let (send_to_game, receive_from_twitch) = channel::<ChatMessage>();
     let (send_to_twitch, receive_from_game) = channel::<String>();
+    
+    chat_test_mock::run(send_to_game.clone(), 5, get_the_streamer_game::SPLASH_DURATION, 500, 5000);        
+    
     let _twitchchat_thread = thread::spawn(move || {
         twitch_chat_wrapper::run(receive_from_game, send_to_game).unwrap();
     });
+
     let game_thread = thread::spawn(move || {
         let (context, event_loop) =
             &mut match ContextBuilder::new("Get the Streamer", "Brooks Patton")

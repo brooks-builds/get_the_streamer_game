@@ -898,6 +898,7 @@ dependencies = [
  "ggez",
  "rand 0.7.3",
  "twitch_chat_wrapper",
+ "twitchchat",
 ]
 
 [[package]]
@@ -2568,9 +2569,9 @@ dependencies = [
 
 [[package]]
 name = "twitchchat"
-version = "0.14.4"
+version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e35281d9dc2d1c4efafb48ce45edc329717d0cb7b1fad7ea6f77d0580c227e3"
+checksum = "3e23358f38952819a1a92c4f02139ceaafbc2fc338c82cc4bf0d9e96d8601f59"
 dependencies = [
  "async-channel",
  "async-dup",

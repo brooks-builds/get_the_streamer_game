@@ -36,7 +36,7 @@ use twitch_chat_wrapper::chat_message::ChatMessage;
 
 pub const DROP_ZONE_COUNT: u8 = 10;
 const GAME_TIME: Duration = Duration::from_secs(120);
-const SPLASH_DURATION: Duration = Duration::from_secs(25);
+pub const SPLASH_DURATION: Duration = Duration::from_secs(25);
 const LIVES: u8 = 3;
 const FRAMERATE_TARGET: u32 = 60;
 
