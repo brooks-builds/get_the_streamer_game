@@ -57,27 +57,33 @@ impl Sprite {
         })
     }
 
+    // handle mirroring x here
+
     pub fn draw(
         &self,
         context: &mut Context,
         location: Point2<f32>,
-        scale_by: f32,
+        scale_by: [f32; 2],
         rotation: &f32,
         opacity: Option<f32>,
     ) -> GameResult<()> {
         let opacity = opacity.unwrap_or(1.0);
-        let scale_by_y = if *rotation > 3.0 { -scale_by } else { scale_by };
+        let scale_by_y = if *rotation > 3.0 {
+            -scale_by[1]
+        } else {
+            scale_by[1]
+        };
         graphics::draw(
             context,
             &self.image,
             DrawParam::new()
                 .src(self.individual_sprite_rects[self.rect_index])
                 .dest(Point2::new(
-                    location.x + (self.width * scale_by / 2.0),
-                    location.y + (self.height * scale_by / 2.0),
+                    location.x + (self.width * scale_by[0].abs() / 2.0),
+                    location.y + (self.height * scale_by[1] / 2.0),
                 ))
-                .scale([scale_by, scale_by_y])
                 .offset(Point2::new(0.5, 0.5))
+                .scale([scale_by[0], scale_by_y])
                 .rotation(*rotation)
                 .color(Color::new(1.0, 1.0, 1.0, opacity)),
         )

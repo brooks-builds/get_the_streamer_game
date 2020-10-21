@@ -32,4 +32,6 @@ where
         rotation: &mut f32,
         life_system: &mut Option<Box<dyn LifeSystem>>,
     ) -> Result<()>;
+
+    fn get_velocity_x(&self) -> f32;
 }

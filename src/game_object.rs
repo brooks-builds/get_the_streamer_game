@@ -63,7 +63,12 @@ impl GameObject {
         }
 
         if let Some(draw_system) = &mut self.draw_system {
-            draw_system.update(time_since_start);
+            let velocity_x = if let Some(physics_system) = &self.physics_system {
+                physics_system.get_velocity_x()
+            } else {
+                0.0
+            };
+            draw_system.update(time_since_start, velocity_x);
         }
 
         if let Some(life_system) = &mut self.life_system {

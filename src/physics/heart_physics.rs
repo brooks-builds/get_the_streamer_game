@@ -42,4 +42,8 @@ impl PhysicsSystem for HeartPhysics {
 
         Ok(())
     }
+
+    fn get_velocity_x(&self) -> f32 {
+        0.0
+    }
 }
