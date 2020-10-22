@@ -1,5 +1,7 @@
 use ggez::{nalgebra::Point2, Context, GameResult};
 use rand::prelude::*;
+use strum::VariantNames;
+use strum_macros::{EnumString, EnumVariantNames};
 
 use crate::{
     draw_system::DrawSystem, draw_system::GameObjectDrawSystem, game_object::GameObject,
@@ -141,7 +143,8 @@ impl Command {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, EnumString, EnumVariantNames)]
+#[strum(serialize_all = "kebab_case")]
 pub enum CommandType {
     Fire,
     Sword,

@@ -1,5 +1,5 @@
 mod chatter;
-mod command;
+pub mod command;
 mod credits;
 mod draw_system;
 mod game_object;
