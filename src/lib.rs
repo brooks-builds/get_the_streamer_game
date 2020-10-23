@@ -27,7 +27,7 @@ use physics::{PhysicsSystem, PlayerPhysics, TimerPhysicsSystem};
 use running_state::RunningState;
 use splash::Splash;
 use sprites::Sprite;
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 use std::{
     sync::mpsc::{channel, Receiver, Sender},
     time::Instant,
@@ -39,6 +39,7 @@ const GAME_TIME: Duration = Duration::from_secs(120);
 pub const SPLASH_DURATION: Duration = Duration::from_secs(15);
 const LIVES: u8 = 3;
 const FRAMERATE_TARGET: u32 = 60;
+const SCORES_FILE_NAME: &'static str = "/scores";
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -186,9 +187,26 @@ impl GameState {
         );
         Ok(timer_game_object)
     }
+
+    /// Load scores from disk, update the scores in memory, save the updated scores, then return the updated scores
+    fn update_saved_scores(&self, context: &mut Context) -> HashMap<String, u128> {
+        // get the scores from disk
+        let mut scores = utilities::load_scores(SCORES_FILE_NAME, context);
+        // update the scores
+        scores.insert("brookzerker".to_owned(), 5);
+        // save the updated scores to disk
+        dbg!("update saved scores");
+        if let Err(error) = utilities::save_scores(context, SCORES_FILE_NAME, &scores) {
+            dbg!(error);
+        }
+
+        // return the updated scores
+        scores
+    }
 }
 impl EventHandler for GameState {
     fn update(&mut self, context: &mut Context) -> GameResult {
+        self.update_saved_scores(context);
         while timer::check_update_time(context, FRAMERATE_TARGET) {
             match self.running_state {
                 RunningState::StartingSoon => {
@@ -300,6 +318,8 @@ impl EventHandler for GameState {
                     }
                 }
                 RunningState::ChatWon | RunningState::PlayerWon => {
+                    let mut scores = utilities::load_scores(SCORES_FILE_NAME, context);
+                    dbg!(scores);
                     if let Some(credits) = &mut self.credits {
                         if !credits.update() {
                             ggez::event::quit(context);
