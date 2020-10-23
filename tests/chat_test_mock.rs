@@ -3,8 +3,8 @@ use std::sync::mpsc::Sender;
 use std::thread;
 use std::time::Duration;
 use twitch_chat_wrapper::chat_message::ChatMessage;
-use twitchchat::messages::Privmsg;
-use twitchchat::FromIrcMessage;
+use twitch_chat_wrapper::twitchchat::messages::Privmsg;
+use twitch_chat_wrapper::twitchchat::FromIrcMessage;
 
 pub fn run(
     send_incoming_chat_message: Sender<ChatMessage>,
@@ -15,7 +15,7 @@ pub fn run(
 ) -> () {
     thread::spawn(move || {
         //The commands we'll be selecting from and the number of times each will be in the selection pool
-        let command_occurences = [("fire", 1), ("sword", 1), ("snek", 1), ("heart", 1)];
+        let command_occurences = [("fire", 1), ("sword", 1), ("snake", 1), ("heart", 1)];
 
         //Generate command pool
         let command_pool = command_occurences

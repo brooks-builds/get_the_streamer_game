@@ -11,7 +11,7 @@ const WINDOW_SIZE: (f32, f32) = (1920.0, 1080.0);
 #[test]
 fn main() {
     let (send_to_game, receive_from_twitch) = channel::<ChatMessage>();
-    let (send_to_twitch, receive_from_game) = channel::<String>();
+    let (send_to_twitch, _receive_from_game) = channel::<String>();
 
     chat_test_mock::run(
         send_to_game.clone(),
