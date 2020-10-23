@@ -39,7 +39,7 @@ pub fn run(
                 command = command_pool[rng.gen_range(0, command_pool.len())],
                 column = rng.gen_range(0, 10)
             );
-            let (_pos, msg_a) = twitchchat::irc::parse_one(&input).unwrap();
+            let (_pos, msg_a) = twitch_chat_wrapper::twitchchat::irc::parse_one(&input).unwrap();
 
             let test_msg: Privmsg = Privmsg::from_irc(msg_a).unwrap();
             send_incoming_chat_message
