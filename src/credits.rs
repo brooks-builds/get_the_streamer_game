@@ -13,8 +13,8 @@ use rand::seq::IteratorRandom;
 
 const VELOCITY_Y: f32 = -2.5;
 const DEFAULT_STREAMER_WIN_MESSAGE: &str = "Streamer won!";
-const CONTRIBUTORS: [&'static str; 5] =
-    ["brookspatton", "dmb1107", "LordMZTE", "MeirKlemp", "ootsby"];
+const CONTRIBUTORS: [&'static str; 6] =
+    ["brookspatton", "dmb1107", "LordMZTE", "MeirKlemp", "ootsby", "dannyfritz"];
 
 pub struct Credits {
     all_credits: Vec<(Text, Point2<f32>)>,
