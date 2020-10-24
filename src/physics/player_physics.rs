@@ -32,7 +32,8 @@ impl PlayerPhysics {
     fn handle_input(&mut self, context: &mut Context) {
         if input::keyboard::is_key_pressed(context, KeyCode::A) {
             self.velocity.x -= MOVE_FORCE;
-        } else if input::keyboard::is_key_pressed(context, KeyCode::S) {
+        } else if input::keyboard::is_key_pressed(context, KeyCode::S)
+            || input::keyboard::is_key_pressed(context, KeyCode::D) {
             self.velocity.x += MOVE_FORCE;
         }
 
