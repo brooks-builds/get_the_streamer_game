@@ -32,7 +32,6 @@ impl PlayerDrawSystem {
 
 impl DrawSystem for PlayerDrawSystem {
     fn update(&mut self, _time_since_start: std::time::Duration, velocity_x: f32) {
-        dbg!(velocity_x);
         if velocity_x < -0.1 {
             self.facing = Facing::Left;
         } else if velocity_x > 0.1 {

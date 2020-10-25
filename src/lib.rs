@@ -41,7 +41,7 @@ const GAME_TIME: Duration = Duration::from_secs(120);
 pub const SPLASH_DURATION: Duration = Duration::from_secs(15);
 const LIVES: u8 = 3;
 const FRAMERATE_TARGET: u32 = 60;
-const SCORES_FILE_NAME: &'static str = "/scores";
+const SCORES_FILE_NAME: &'static str = "/high_scores";
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -57,6 +57,7 @@ pub struct GameState {
     splash: Splash,
     game_start_time: Instant,
     object_sound: audio::Source,
+    scores: HashMap<String, u128>,
 }
 
 impl GameState {
@@ -123,6 +124,7 @@ impl GameState {
             splash,
             game_start_time,
             object_sound: audio::Source::new(context, "/threeTone1.ogg").unwrap(),
+            scores: HashMap::new(),
         })
     }
 
@@ -138,11 +140,13 @@ impl GameState {
                 self.interface.get_column_coordinates_by_index(command.id),
                 context,
             )?);
+            let score = self.scores.entry(chatter.name.clone()).or_insert(0);
+            *score += 1;
             if !self.teammates.contains(&chatter) {
                 if !self
                     .teammates
                     .iter()
-                    .any(|teammate_chatter| teammate_chatter.name == chatter.name)
+                    .any(|teammate_chatter| teammate_chatter.name == chatter.name.clone())
                 {
                     self.teammates.push(chatter);
                 }
@@ -193,25 +197,16 @@ impl GameState {
         Ok(timer_game_object)
     }
 
-    /// Load scores from disk, update the scores in memory, save the updated scores, then return the updated scores
-    fn update_saved_scores(&self, context: &mut Context) -> HashMap<String, u128> {
-        // get the scores from disk
-        let mut scores = utilities::load_scores(SCORES_FILE_NAME, context);
-        // update the scores
-        scores.insert("brookzerker".to_owned(), 5);
-        // save the updated scores to disk
-        dbg!("update saved scores");
-        if let Err(error) = utilities::save_scores(context, SCORES_FILE_NAME, &scores) {
-            dbg!(error);
+    fn update_scores(&self, high_scores: &mut HashMap<String, u128>) {
+        for (username, score) in &self.scores {
+            let high_score = high_scores.entry(username.to_owned()).or_insert(0);
+            *high_score += *score;
         }
-
-        // return the updated scores
-        scores
+        dbg!("updating scores");
     }
 }
 impl EventHandler for GameState {
     fn update(&mut self, context: &mut Context) -> GameResult {
-        self.update_saved_scores(context);
         while timer::check_update_time(context, FRAMERATE_TARGET) {
             match self.running_state {
                 RunningState::StartingSoon => {
@@ -298,9 +293,6 @@ impl EventHandler for GameState {
                     self.game_objects
                         .retain(|game_object| game_object.is_alive());
 
-                    #[cfg(debug_assertions)]
-                    println!("game object count: {}", self.game_objects.len());
-
                     if let Ok(chatter) = self.player_hit_object_event.try_recv() {
                         let message_to_chat = format!("The streamer was hit by {}", &chatter.name);
                         self.send_to_chat.send(message_to_chat).unwrap();
@@ -323,20 +315,25 @@ impl EventHandler for GameState {
                     }
                 }
                 RunningState::ChatWon | RunningState::PlayerWon => {
-                    let mut scores = utilities::load_scores(SCORES_FILE_NAME, context);
-                    dbg!(scores);
                     if let Some(credits) = &mut self.credits {
                         if !credits.update() {
                             ggez::event::quit(context);
                         }
                     } else {
+                        let mut high_scores = utilities::load_scores(SCORES_FILE_NAME, context);
+                        self.update_scores(&mut high_scores);
+                        if let Err(error) =
+                            utilities::save_scores(context, SCORES_FILE_NAME, &high_scores)
+                        {
+                            eprintln!("Error saving high scores to disk: {}", error);
+                        }
                         self.remove_hitting_teammates();
                         self.credits = Some(Credits::new(
                             self.running_state,
                             context,
                             self.screen_size,
-                            &self.hitting_chatters,
-                            &self.teammates,
+                            &high_scores,
+                            &self.scores,
                         )?);
                     }
                 }
