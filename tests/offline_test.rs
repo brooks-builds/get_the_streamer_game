@@ -1,5 +1,5 @@
 use get_the_streamer_game::GameState;
-use ggez::conf::WindowMode;
+use ggez::conf::{WindowMode, WindowSetup};
 use ggez::{event, ContextBuilder};
 use std::sync::mpsc::channel;
 use std::thread;
@@ -24,6 +24,7 @@ fn main() {
     let game_thread = thread::spawn(move || {
         let (context, event_loop) =
             &mut match ContextBuilder::new("Get the Streamer", "Brooks Patton")
+                .window_setup(WindowSetup::default().title("Get the Streamer"))
                 .window_mode(WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1))
                 .build()
             {
