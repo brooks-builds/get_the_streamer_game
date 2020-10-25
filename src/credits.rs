@@ -13,7 +13,7 @@ use ggez::{
 use rand::prelude::*;
 use rand::seq::IteratorRandom;
 
-const VELOCITY_Y: f32 = -2.5;
+const VELOCITY_Y: f32 = -2.0;
 const DEFAULT_STREAMER_WIN_MESSAGE: &str = "Streamer won!";
 const CONTRIBUTORS: [&'static str; 6] = [
     "brookspatton",

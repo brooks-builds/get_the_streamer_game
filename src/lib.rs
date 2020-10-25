@@ -65,7 +65,7 @@ impl GameState {
         screen_size: (f32, f32),
         context: &mut Context,
     ) -> GameResult<GameState> {
-        send_to_chat.send("Chat vs. Streamer game started! Use the commands on screen to drop objects that the streamer will attempt to avoid".to_owned()).unwrap();
+        send_to_chat.send("Chat vs. Streamer game started! Use the commands on screen to drop objects that the streamer will attempt to avoid. You get 1 point for every object you drop and 10 points for every time you hit the player!".to_owned()).unwrap();
         let mut interface = Interface::new(context, screen_size, LIVES)?;
 
         // create timer block
@@ -271,8 +271,10 @@ impl EventHandler for GameState {
                         .retain(|game_object| game_object.is_alive());
 
                     if let Ok(chatter) = self.player_hit_object_event.try_recv() {
-                        let message_to_chat = format!("The streamer was hit by {}", &chatter.name);
+                        let message_to_chat = format!("Hit! {} gets 10 points", &chatter.name);
                         self.send_to_chat.send(message_to_chat).unwrap();
+                        let score = self.scores.entry(chatter.name).or_insert(0);
+                        *score += 10;
                     }
 
                     if self
