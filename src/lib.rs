@@ -50,8 +50,6 @@ pub struct GameState {
     interface: Interface,
     game_objects: Vec<GameObject>,
     player_hit_object_event: Receiver<Chatter>,
-    hitting_chatters: Vec<Chatter>,
-    teammates: Vec<Chatter>,
     running_state: RunningState,
     credits: Option<Credits>,
     splash: Splash,
@@ -116,9 +114,7 @@ impl GameState {
             screen_size,
             interface,
             game_objects,
-            hitting_chatters: vec![],
             player_hit_object_event: receive_player_hit_object_event,
-            teammates: vec![],
             running_state: RunningState::StartingSoon,
             credits: None,
             splash,
@@ -142,15 +138,6 @@ impl GameState {
             )?);
             let score = self.scores.entry(chatter.name.clone()).or_insert(0);
             *score += 1;
-            if !self.teammates.contains(&chatter) {
-                if !self
-                    .teammates
-                    .iter()
-                    .any(|teammate_chatter| teammate_chatter.name == chatter.name.clone())
-                {
-                    self.teammates.push(chatter);
-                }
-            }
         }
         Ok(())
     }
@@ -159,16 +146,6 @@ impl GameState {
         self.game_objects
             .iter()
             .find(|game_object| game_object.my_type == GameObjectType::Player)
-    }
-
-    /// Remove chatters from teammates that also hit the streamer
-    fn remove_hitting_teammates(&mut self) {
-        let hitters = self.hitting_chatters.clone();
-        self.teammates.retain(|teammate_chatter| {
-            !hitters
-                .iter()
-                .any(|hitting_chatter| hitting_chatter.name == teammate_chatter.name)
-        });
     }
 
     fn create_timer(
@@ -296,13 +273,6 @@ impl EventHandler for GameState {
                     if let Ok(chatter) = self.player_hit_object_event.try_recv() {
                         let message_to_chat = format!("The streamer was hit by {}", &chatter.name);
                         self.send_to_chat.send(message_to_chat).unwrap();
-                        if !self
-                            .hitting_chatters
-                            .iter()
-                            .any(|hitting_chatter| chatter.name == hitting_chatter.name)
-                        {
-                            self.hitting_chatters.push(chatter);
-                        }
                     }
 
                     if self
@@ -327,7 +297,6 @@ impl EventHandler for GameState {
                         {
                             eprintln!("Error saving high scores to disk: {}", error);
                         }
-                        self.remove_hitting_teammates();
                         self.credits = Some(Credits::new(
                             self.running_state,
                             context,
