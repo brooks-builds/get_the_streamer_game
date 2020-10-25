@@ -29,7 +29,7 @@ use physics::{PhysicsSystem, PlayerPhysics, TimerPhysicsSystem};
 use running_state::RunningState;
 use splash::Splash;
 use sprites::Sprite;
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 use std::{
     sync::mpsc::{channel, Receiver, Sender},
     time::Instant,
@@ -41,6 +41,7 @@ const GAME_TIME: Duration = Duration::from_secs(120);
 pub const SPLASH_DURATION: Duration = Duration::from_secs(15);
 const LIVES: u8 = 3;
 const FRAMERATE_TARGET: u32 = 60;
+const SCORES_FILE_NAME: &'static str = "/high_scores";
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -49,13 +50,12 @@ pub struct GameState {
     interface: Interface,
     game_objects: Vec<GameObject>,
     player_hit_object_event: Receiver<Chatter>,
-    hitting_chatters: Vec<Chatter>,
-    teammates: Vec<Chatter>,
     running_state: RunningState,
     credits: Option<Credits>,
     splash: Splash,
     game_start_time: Instant,
     object_sound: audio::Source,
+    scores: HashMap<String, u128>,
 }
 
 impl GameState {
@@ -65,7 +65,7 @@ impl GameState {
         screen_size: (f32, f32),
         context: &mut Context,
     ) -> GameResult<GameState> {
-        send_to_chat.send("Chat vs. Streamer game started! Use the commands on screen to drop objects that the streamer will attempt to avoid".to_owned()).unwrap();
+        send_to_chat.send("Chat vs. Streamer game started! Use the commands on screen to drop objects that the streamer will attempt to avoid. You get 1 point for every object you drop and 10 points for every time you hit the player!".to_owned()).unwrap();
         let mut interface = Interface::new(context, screen_size, LIVES)?;
 
         // create timer block
@@ -114,14 +114,13 @@ impl GameState {
             screen_size,
             interface,
             game_objects,
-            hitting_chatters: vec![],
             player_hit_object_event: receive_player_hit_object_event,
-            teammates: vec![],
             running_state: RunningState::StartingSoon,
             credits: None,
             splash,
             game_start_time,
             object_sound: audio::Source::new(context, "/threeTone1.ogg").unwrap(),
+            scores: HashMap::new(),
         })
     }
 
@@ -137,15 +136,8 @@ impl GameState {
                 self.interface.get_column_coordinates_by_index(command.id),
                 context,
             )?);
-            if !self.teammates.contains(&chatter) {
-                if !self
-                    .teammates
-                    .iter()
-                    .any(|teammate_chatter| teammate_chatter.name == chatter.name)
-                {
-                    self.teammates.push(chatter);
-                }
-            }
+            let score = self.scores.entry(chatter.name.clone()).or_insert(0);
+            *score += 1;
         }
         Ok(())
     }
@@ -154,16 +146,6 @@ impl GameState {
         self.game_objects
             .iter()
             .find(|game_object| game_object.my_type == GameObjectType::Player)
-    }
-
-    /// Remove chatters from teammates that also hit the streamer
-    fn remove_hitting_teammates(&mut self) {
-        let hitters = self.hitting_chatters.clone();
-        self.teammates.retain(|teammate_chatter| {
-            !hitters
-                .iter()
-                .any(|hitting_chatter| hitting_chatter.name == teammate_chatter.name)
-        });
     }
 
     fn create_timer(
@@ -190,6 +172,14 @@ impl GameState {
             None,
         );
         Ok(timer_game_object)
+    }
+
+    fn update_scores(&self, high_scores: &mut HashMap<String, u128>) {
+        for (username, score) in &self.scores {
+            let high_score = high_scores.entry(username.to_owned()).or_insert(0);
+            *high_score += *score;
+        }
+        dbg!("updating scores");
     }
 }
 impl EventHandler for GameState {
@@ -280,19 +270,11 @@ impl EventHandler for GameState {
                     self.game_objects
                         .retain(|game_object| game_object.is_alive());
 
-                    #[cfg(debug_assertions)]
-                    println!("game object count: {}", self.game_objects.len());
-
                     if let Ok(chatter) = self.player_hit_object_event.try_recv() {
-                        let message_to_chat = format!("The streamer was hit by {}", &chatter.name);
+                        let message_to_chat = format!("Hit! {} gets 10 points", &chatter.name);
                         self.send_to_chat.send(message_to_chat).unwrap();
-                        if !self
-                            .hitting_chatters
-                            .iter()
-                            .any(|hitting_chatter| chatter.name == hitting_chatter.name)
-                        {
-                            self.hitting_chatters.push(chatter);
-                        }
+                        let score = self.scores.entry(chatter.name).or_insert(0);
+                        *score += 10;
                     }
 
                     if self
@@ -310,13 +292,19 @@ impl EventHandler for GameState {
                             ggez::event::quit(context);
                         }
                     } else {
-                        self.remove_hitting_teammates();
+                        let mut high_scores = utilities::load_scores(SCORES_FILE_NAME, context);
+                        self.update_scores(&mut high_scores);
+                        if let Err(error) =
+                            utilities::save_scores(context, SCORES_FILE_NAME, &high_scores)
+                        {
+                            eprintln!("Error saving high scores to disk: {}", error);
+                        }
                         self.credits = Some(Credits::new(
                             self.running_state,
                             context,
                             self.screen_size,
-                            &self.hitting_chatters,
-                            &self.teammates,
+                            &high_scores,
+                            &self.scores,
                         )?);
                     }
                 }

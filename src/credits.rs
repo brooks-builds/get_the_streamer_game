@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use super::utilities;
-use crate::{chatter::Chatter, running_state::RunningState};
+use crate::running_state::RunningState;
 use ggez::{
     graphics::DrawParam,
     graphics::Font,
@@ -11,10 +13,16 @@ use ggez::{
 use rand::prelude::*;
 use rand::seq::IteratorRandom;
 
-const VELOCITY_Y: f32 = -2.5;
+const VELOCITY_Y: f32 = -2.0;
 const DEFAULT_STREAMER_WIN_MESSAGE: &str = "Streamer won!";
-const CONTRIBUTORS: [&'static str; 6] =
-    ["brookspatton", "dmb1107", "LordMZTE", "MeirKlemp", "ootsby", "dannyfritz"];
+const CONTRIBUTORS: [&'static str; 6] = [
+    "brookspatton",
+    "dmb1107",
+    "LordMZTE",
+    "MeirKlemp",
+    "ootsby",
+    "dannyfritz",
+];
 
 pub struct Credits {
     all_credits: Vec<(Text, Point2<f32>)>,
@@ -25,8 +33,8 @@ impl Credits {
         running_state: RunningState,
         context: &mut Context,
         screen_size: (f32, f32),
-        hitting_chatters: &Vec<Chatter>,
-        teammates: &Vec<Chatter>,
+        high_scores: &HashMap<String, u128>,
+        scores: &HashMap<String, u128>,
     ) -> GameResult<Self> {
         let file_name = if matches!(running_state, RunningState::PlayerWon) {
             "streamer_wins_messages.txt"
@@ -50,46 +58,24 @@ impl Credits {
         Self::create_credit(
             context,
             screen_size,
-            "Chatters who hit",
+            "Chatters (score) -> (total)",
             None,
             &mut all_credits,
             &mut credit_y,
         );
 
-        hitting_chatters.iter().for_each(|chatter| {
+        scores.iter().for_each(|(username, score)| {
+            let high_score = high_scores.get(username).unwrap_or(score);
+            let title = format!("{} - {} -> {}", username, score, high_score);
             Self::create_credit(
                 context,
                 screen_size,
-                &chatter.name,
+                &title,
                 None,
                 &mut all_credits,
                 &mut credit_y,
             )
         });
-
-        if teammates.len() > 0 && matches!(running_state, RunningState::ChatWon) {
-            Self::create_space(context, screen_size, &mut all_credits, &mut credit_y);
-            Self::create_credit(
-                context,
-                screen_size,
-                "With teammates",
-                None,
-                &mut all_credits,
-                &mut credit_y,
-            );
-
-            teammates.iter().for_each(|chatter| {
-                Self::create_credit(
-                    context,
-                    screen_size,
-                    &chatter.name,
-                    None,
-                    &mut all_credits,
-                    &mut credit_y,
-                )
-            });
-            Self::create_space(context, screen_size, &mut all_credits, &mut credit_y);
-        }
 
         Self::create_credit(
             context,
