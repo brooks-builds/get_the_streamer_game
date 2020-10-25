@@ -2,6 +2,8 @@ use crate::{game_object_type::GameObjectType, life_system::LifeSystem};
 
 use super::{Chatter, GameObject, PhysicsSystem};
 use eyre::Result;
+use ggez::audio;
+use ggez::audio::SoundSource;
 use ggez::graphics::Rect;
 use ggez::input::keyboard::KeyCode;
 use ggez::nalgebra::Point2;
@@ -18,25 +20,33 @@ pub struct PlayerPhysics {
     velocity: Point2<f32>,
     affected_by_gravity: bool,
     player_hit_object: Sender<Chatter>,
+    heart_sound: audio::Source,
+    jump_sound: audio::Source,
+    hit_sound: audio::Source,
 }
 
 impl PlayerPhysics {
-    pub fn new(player_hit_object: Sender<Chatter>) -> PlayerPhysics {
+    pub fn new(context: &mut Context, player_hit_object: Sender<Chatter>) -> PlayerPhysics {
         PlayerPhysics {
             velocity: Point2::new(0.0, 0.0),
             affected_by_gravity: true,
             player_hit_object,
+            heart_sound: audio::Source::new(context, "/phaserUp7.ogg").unwrap(),
+            jump_sound: audio::Source::new(context, "/phaseJump1.ogg").unwrap(),
+            hit_sound: audio::Source::new(context, "/zap2.ogg").unwrap(),
         }
     }
 
     fn handle_input(&mut self, context: &mut Context) {
         if input::keyboard::is_key_pressed(context, KeyCode::A) {
             self.velocity.x -= MOVE_FORCE;
-        } else if input::keyboard::is_key_pressed(context, KeyCode::S) {
+        } else if input::keyboard::is_key_pressed(context, KeyCode::S)
+            || input::keyboard::is_key_pressed(context, KeyCode::D) {
             self.velocity.x += MOVE_FORCE;
         }
 
         if input::keyboard::is_key_pressed(context, KeyCode::Space) && self.on_ground() {
+            self.jump_sound.play().unwrap();
             self.velocity.y += JUMP_FORCE;
             self.affected_by_gravity = true;
         }
@@ -94,8 +104,10 @@ impl PhysicsSystem for PlayerPhysics {
             if let Some(player_life_system) = life_system.as_deref_mut() {
                 if GameObjectType::Heart == game_object.my_type {
                     player_life_system.gain_life();
+                    self.heart_sound.play().unwrap();
                 } else {
                     if player_life_system.hit() {
+                        self.hit_sound.play().unwrap();
                         let chatter = if let Some(chatter) = game_object.chatter {
                             chatter
                         } else {

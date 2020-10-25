@@ -18,6 +18,8 @@ use credits::Credits;
 use draw_system::{DrawSystem, PlayerDrawSystem, TimerDrawSystem};
 use game_object::GameObject;
 use game_object_type::GameObjectType;
+use ggez::audio;
+use ggez::audio::SoundSource;
 use ggez::event::EventHandler;
 use ggez::graphics::BLACK;
 use ggez::{graphics, timer, Context, GameResult};
@@ -54,6 +56,7 @@ pub struct GameState {
     credits: Option<Credits>,
     splash: Splash,
     game_start_time: Instant,
+    object_sound: audio::Source,
 }
 
 impl GameState {
@@ -84,7 +87,7 @@ impl GameState {
             PlayerDrawSystem::new(player_left_sprite, player_forward_sprite, player_scale);
         let player_size = player_draw_system.get_size().unwrap_or((50.0, 50.0));
         let (send_player_hit_object_event, receive_player_hit_object_event) = channel();
-        let player_physics_system = PlayerPhysics::new(send_player_hit_object_event);
+        let player_physics_system = PlayerPhysics::new(context, send_player_hit_object_event);
         let player = GameObject::new(
             250.0,
             250.0,
@@ -119,6 +122,7 @@ impl GameState {
             credits: None,
             splash,
             game_start_time,
+            object_sound: audio::Source::new(context, "/threeTone1.ogg").unwrap(),
         })
     }
 
@@ -129,6 +133,7 @@ impl GameState {
     ) -> GameResult<()> {
         if let Some(command) = command {
             let chatter = command.chatter.clone();
+            self.object_sound.play().unwrap();
             self.game_objects.push(command.handle(
                 self.interface.get_column_coordinates_by_index(command.id),
                 context,
