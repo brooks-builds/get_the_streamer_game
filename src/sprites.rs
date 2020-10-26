@@ -3,6 +3,23 @@ use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
 use graphics::Color;
 use std::time::Duration;
+use crate::get_image_from_assets;
+
+pub struct SpriteImageDef{
+    pub image_path: &'static str,
+    pub frames_x: u16,
+    pub frames_y:u16,
+}
+
+impl SpriteImageDef{
+    pub const fn new( path:&'static str, frames_x: u16, frames_y:u16) -> SpriteImageDef{
+        Self{
+            image_path: path,
+            frames_x: frames_x,
+            frames_y: frames_y,
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Sprite {
@@ -18,11 +35,11 @@ pub struct Sprite {
 impl Sprite {
     pub fn new(
         context: &mut Context,
-        path: &'static str,
+        image_path: &'static str,
         sprites_accross: u16,
         sprites_down: u16,
-    ) -> GameResult<Sprite> {
-        let image = Image::new(context, path)?;
+    ) -> Sprite {
+        let image = get_image_from_assets(context, image_path.to_string());
         let mut individual_sprite_rects = vec![];
         let image_width = image.width();
         let image_height = image.height();
@@ -46,7 +63,7 @@ impl Sprite {
             }
         }
 
-        Ok(Sprite {
+        Sprite {
             image,
             individual_sprite_rects,
             rect_index,
@@ -54,7 +71,7 @@ impl Sprite {
             index_change_duration,
             width: single_sprite_width as f32,
             height: single_sprite_height as f32,
-        })
+        }
     }
 
     // handle mirroring x here

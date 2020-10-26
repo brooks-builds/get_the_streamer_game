@@ -6,18 +6,18 @@ use crate::{
     game_object_type::GameObjectType, life_system::FireLifeSystem, life_system::HeartLifeSystem,
     life_system::LifeSystem, life_system::SnakeLifeSystem, life_system::SwordLifeSystem,
     physics::FirePhysics, physics::HeartPhysics, physics::PhysicsSystem, physics::SnakePhysics,
-    physics::SwordPhysics, sprites::Sprite,
+    physics::SwordPhysics, sprites::Sprite, sprites::SpriteImageDef,
 };
 
 use super::Chatter;
 
-pub struct Command {
-    pub command_type: CommandType,
+pub struct Command<'a> {
+    pub command_type: CommandType<'a>,
     pub id: u8,
     pub chatter: Chatter,
 }
 
-impl Command {
+impl<'a> Command<'a> {
     pub fn new(message: &str, chatter: Chatter) -> Result<Option<Command>, &'static str> {
         if !message.starts_with('#') {
             return Ok(None);
@@ -28,22 +28,22 @@ impl Command {
             let id = Self::get_id_from_message(parts.next())?;
             match command {
                 "#fire" => Ok(Some(Command {
-                    command_type: CommandType::Fire,
+                    command_type: CommandTypes::Fire,
                     id,
                     chatter,
                 })),
                 "#sword" => Ok(Some(Command {
-                    command_type: CommandType::Sword,
+                    command_type: CommandTypes::Sword,
                     id,
                     chatter,
                 })),
                 "#snake" | "#snek" => Ok(Some(Command {
-                    command_type: CommandType::Snake,
+                    command_type: CommandTypes::Snake,
                     id,
                     chatter,
                 })),
                 "#heart" => Ok(Some(Command {
-                    command_type: CommandType::Heart,
+                    command_type: CommandTypes::Heart,
                     id,
                     chatter,
                 })),
@@ -78,8 +78,8 @@ impl Command {
         context: &mut Context,
     ) -> GameResult<GameObject> {
         let scale = self.get_scale();
-        let sprite = self.get_sprite(context)?;
-        let draw_system = GameObjectDrawSystem::new(Some(sprite), None, scale);
+        let sprite = self.get_sprite(context);
+        let draw_system = GameObjectDrawSystem::new(sprite, None, scale);
         let size = draw_system.get_size().unwrap_or((50.0, 50.0));
         let physics_system = self.get_physics();
         let game_object = GameObject::new(
@@ -91,60 +91,90 @@ impl Command {
             physics_system,
             true,
             Some(self.chatter.clone()),
-            self.get_game_object_type(),
+            self.command_type.game_object_type.clone(),
             self.get_life_system(),
         );
         Ok(game_object)
     }
 
     fn get_scale(&self) -> f32 {
-        match self.command_type {
-            CommandType::Fire => 2.0,
-            CommandType::Sword => 3.0,
-            CommandType::Snake => 3.0,
-            CommandType::Heart => 1.5,
-        }
+       return self.command_type.scale;
     }
 
-    fn get_sprite(&self, context: &mut Context) -> GameResult<Sprite> {
-        match self.command_type {
-            CommandType::Fire => Sprite::new(context, "/LargeFlame.png", 4, 1),
-            CommandType::Sword => Sprite::new(context, "/item1BIT_sword.png", 1, 1),
-            CommandType::Snake => Sprite::new(context, "/snake.png", 4, 1),
-            CommandType::Heart => Sprite::new(context, "/heart.png", 1, 1),
-        }
+    fn get_sprite(&self, context: &mut Context) -> Sprite {
+        let def = &self.command_type.sprite_def;
+        return Sprite::new(context, def.image_path, def.frames_x, def.frames_y); 
     }
 
     fn get_physics(&self) -> Option<Box<dyn PhysicsSystem>> {
-        match self.command_type {
-            CommandType::Fire => Some(Box::new(FirePhysics::new())),
-            CommandType::Sword => Some(Box::new(SwordPhysics::new())),
-            CommandType::Snake => Some(Box::new(SnakePhysics::new())),
-            CommandType::Heart => Some(Box::new(HeartPhysics::new())),
-        }
+        return (self.command_type.physics_system)();
     }
 
     fn get_life_system(&self) -> Option<Box<dyn LifeSystem>> {
-        match self.command_type {
-            CommandType::Fire => Some(Box::new(FireLifeSystem::new())),
-            CommandType::Sword => Some(Box::new(SwordLifeSystem::new())),
-            CommandType::Snake => Some(Box::new(SnakeLifeSystem::new())),
-            CommandType::Heart => Some(Box::new(HeartLifeSystem::new())),
-        }
-    }
-
-    fn get_game_object_type(&self) -> GameObjectType {
-        match self.command_type {
-            CommandType::Heart => GameObjectType::Heart,
-            _ => GameObjectType::Enemy,
-        }
+        return (self.command_type.life_system)();
     }
 }
 
 #[derive(PartialEq, Debug)]
-pub enum CommandType {
+pub enum OldCommandType {
     Fire,
     Sword,
     Snake,
     Heart,
 }
+
+pub struct CommandType<'a> {
+    pub command_string: &'a str,
+    pub game_object_type: GameObjectType,
+    pub scale: f32,
+    pub sprite_def: SpriteImageDef,
+    pub physics_system: fn() -> Option<Box<dyn PhysicsSystem>>,
+    pub life_system: fn() -> Option<Box<dyn LifeSystem>>,
+}
+
+pub struct CommandTypes {}
+
+impl<'a> CommandTypes {
+    const Fire: CommandType<'a> = CommandType {
+        command_string: "fire",
+        game_object_type: GameObjectType::Enemy,
+        scale: 2.0,
+        sprite_def: SpriteImageDef::new("/LargeFlame.png", 4, 1),
+        physics_system: || Some(Box::new(FirePhysics::new())),
+        life_system: || Some(Box::new(FireLifeSystem::new())),
+    };
+    const Sword: CommandType<'a> = CommandType {
+        command_string: "sword",
+        game_object_type: GameObjectType::Enemy,
+        scale: 3.0,
+        sprite_def: SpriteImageDef::new("/item1BIT_sword.png", 1, 1),
+        physics_system: || Some(Box::new(SwordPhysics::new())),
+        life_system: || Some(Box::new(SwordLifeSystem::new())),
+    };
+    const Snake: CommandType<'a> = CommandType {
+        command_string: "snake",
+        game_object_type: GameObjectType::Enemy,
+        scale: 3.0,
+        sprite_def: SpriteImageDef::new("/snake.png", 4, 1),
+        physics_system: || Some(Box::new(SnakePhysics::new())),
+        life_system: || Some(Box::new(SnakeLifeSystem::new())),
+    };
+    const Snek: CommandType<'a> = CommandType {
+        command_string: "snek",
+        game_object_type: GameObjectType::Enemy,
+        scale: 3.0,
+        sprite_def: SpriteImageDef::new("/snake.png", 4, 1),
+        physics_system: || Some(Box::new(SnakePhysics::new())),
+        life_system: || Some(Box::new(SnakeLifeSystem::new())),
+    };
+    const Heart: CommandType<'a> = CommandType {
+        command_string: "heart",
+        game_object_type: GameObjectType::Heart,
+        scale: 1.5,
+        sprite_def: SpriteImageDef::new("/heart.png", 1, 1),
+        physics_system: || Some(Box::new(HeartPhysics::new())),
+        life_system: || Some(Box::new(HeartLifeSystem::new())),
+    };
+}
+
+pub static COMMAND_TYPES: CommandTypes = CommandTypes {};

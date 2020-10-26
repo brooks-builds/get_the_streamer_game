@@ -4,7 +4,7 @@ use eyre::Result;
 use ggez::graphics::Rect;
 use ggez::Context;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SwordPhysics {
     velocity_x: f32,
     velocity_y: f32,

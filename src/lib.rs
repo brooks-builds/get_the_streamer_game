@@ -1,5 +1,5 @@
 mod chatter;
-mod command;
+pub mod command;
 mod credits;
 mod draw_system;
 mod game_object;
@@ -11,7 +11,10 @@ mod running_state;
 mod splash;
 mod sprites;
 mod utilities;
+mod game_assets;
+mod chat_test_mock;
 
+use game_assets::GameAssets;
 use chatter::Chatter;
 use command::Command;
 use credits::Credits;
@@ -19,8 +22,8 @@ use draw_system::{DrawSystem, PlayerDrawSystem, TimerDrawSystem};
 use game_object::GameObject;
 use game_object_type::GameObjectType;
 use ggez::event::EventHandler;
-use ggez::graphics::BLACK;
-use ggez::{graphics, timer, Context, GameResult};
+use ggez::{graphics, timer, event, Context, ContextBuilder, GameResult};
+use ggez::graphics::{Image, BLACK};
 use interface::Interface;
 use life_system::{LifeSystem, PlayerLifeSystem};
 use physics::{PhysicsSystem, PlayerPhysics, TimerPhysicsSystem};
@@ -29,16 +32,36 @@ use splash::Splash;
 use sprites::Sprite;
 use std::time::Duration;
 use std::{
+    thread,
     sync::mpsc::{channel, Receiver, Sender},
     time::Instant,
+    sync::Mutex,
 };
 use twitch_chat_wrapper::chat_message::ChatMessage;
+use ggez::conf::WindowMode;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref GAME_ASSETS: Mutex<GameAssets> = Mutex::new(GameAssets::new());
+}
+
+pub fn get_image_from_assets(context:&mut Context, path: String) -> Image{
+    return GAME_ASSETS.lock().unwrap().get_image(context, path);
+}
 
 pub const DROP_ZONE_COUNT: u8 = 10;
 const GAME_TIME: Duration = Duration::from_secs(120);
 pub const SPLASH_DURATION: Duration = Duration::from_secs(15);
 const LIVES: u8 = 3;
 const FRAMERATE_TARGET: u32 = 60;
+
+const WINDOW_SIZE: (f32, f32) = (1920.0, 1080.0);
+
+// thread_local!(static game_context: Option<&'static mut Context> = None);
+
+// pub fn get_game_context() -> Option<&'static mut Context>{
+//     return game_context.with;
+//}
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -77,8 +100,8 @@ impl GameState {
 
         // create player
         let player_scale = 4.0;
-        let player_forward_sprite = Sprite::new(context, "/player_forward.png", 8, 1)?;
-        let player_left_sprite = Sprite::new(context, "/player_left.png", 8, 1)?;
+        let player_forward_sprite = Sprite::new(context, "/player_forward.png", 8, 1);
+        let player_left_sprite = Sprite::new(context,"/player_left.png", 8, 1);
         let player_draw_system =
             PlayerDrawSystem::new(player_left_sprite, player_forward_sprite, player_scale);
         let player_size = player_draw_system.get_size().unwrap_or((50.0, 50.0));
@@ -338,4 +361,38 @@ impl EventHandler for GameState {
 
         graphics::present(context)
     }
+}
+
+
+pub fn run_game() {
+    let (send_to_game, receive_from_twitch) = channel::<ChatMessage>();
+    let (send_to_twitch, receive_from_game) = channel::<String>();
+    
+    chat_test_mock::run(send_to_game.clone(), 5, SPLASH_DURATION, 200, 4000);        
+    
+    let _twitchchat_thread = thread::spawn(move || {
+        twitch_chat_wrapper::run(receive_from_game, send_to_game).unwrap();
+    });
+
+    let game_thread = thread::spawn(move || {
+        let (context, event_loop) =
+            &mut match ContextBuilder::new("Get the Streamer", "Brooks Patton")
+                .window_mode(WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1))
+                .build()
+            {
+                Ok((context, event_loop)) => (context, event_loop),
+                Err(error) => panic!(error),
+            };
+
+        //game_context.with(|f| *f = Some(context));
+
+        let game_state =
+            &mut GameState::new(send_to_twitch, receive_from_twitch, WINDOW_SIZE, context).unwrap();
+        match event::run(context, event_loop, game_state) {
+            Ok(_) => println!("Thanks for playing!"),
+            Err(error) => println!("Error occurred: {}", error),
+        };
+    });
+
+    game_thread.join().unwrap();
 }

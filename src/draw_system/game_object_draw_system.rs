@@ -5,14 +5,14 @@ use ggez::{graphics, Context, GameResult};
 
 #[derive(Debug)]
 pub struct GameObjectDrawSystem {
-    sprite: Option<Sprite>,
+    sprite: Sprite,
     label: Option<Text>,
     scale_by: f32,
 }
 
 impl GameObjectDrawSystem {
     pub fn new(
-        sprite: Option<Sprite>,
+        sprite: Sprite,
         label: Option<String>,
         scale_by: f32,
     ) -> GameObjectDrawSystem {
@@ -34,13 +34,13 @@ impl GameObjectDrawSystem {
 
 impl DrawSystem for GameObjectDrawSystem {
     fn update(&mut self, time_since_start: std::time::Duration, _velocity_x: f32) {
-        if let Some(sprite) = &mut self.sprite {
+        if let sprite = &mut self.sprite {
             sprite.update(time_since_start);
         }
     }
 
     fn draw(&self, context: &mut Context, location: Point2<f32>, rotation: &f32) -> GameResult<()> {
-        if let Some(sprite) = &self.sprite {
+        if let sprite = &self.sprite {
             sprite.draw(
                 context,
                 location,
@@ -77,7 +77,7 @@ impl DrawSystem for GameObjectDrawSystem {
     }
 
     fn get_size(&self) -> Option<(f32, f32)> {
-        if let Some(sprite) = &self.sprite {
+        if let sprite = &self.sprite {
             Some((sprite.width * self.scale_by, sprite.height * self.scale_by))
         } else {
             None

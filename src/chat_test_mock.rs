@@ -17,7 +17,7 @@ pub fn run(
 
     //The commands we'll be selecting from and the number of times each will be in the selection pool
     let command_occurences = [("fire", 2), ("sword", 5), ("snek", 3), ("heart", 1)];
-
+    
     //Generate command pool
     let command_pool = command_occurences.iter().fold(Vec::<&str>::new(), |mut v, c|{ v.extend(vec![c.0;c.1].iter()); return v;});
         

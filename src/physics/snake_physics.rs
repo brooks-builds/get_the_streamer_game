@@ -7,7 +7,7 @@ use super::PhysicsSystem;
 
 const SNAKE_SPEED: f32 = 10.0;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SnakePhysics {
     velocity_x: f32,
     velocity_y: f32,
