@@ -24,24 +24,16 @@ impl SnakePhysics {
     }
 
     fn set_x_velocity(&mut self, collidable_game_objects: &Vec<GameObject>, sprite: &Rect) {
-        let player = collidable_game_objects.iter().find(|game_object| {
-            println!(
-                "Searching for player, currently seeing {:?}",
-                game_object.my_type
-            );
-            game_object.my_type == GameObjectType::Player
-        });
+        let player = collidable_game_objects
+            .iter()
+            .find(|game_object| game_object.my_type == GameObjectType::Player);
 
         if let Some(player) = player {
             if player.location.x < sprite.x {
-                println!("snake landed, player to my left");
                 self.velocity_x = -SNAKE_SPEED;
             } else {
-                println!("snake landed, player to my right");
                 self.velocity_x = SNAKE_SPEED;
             }
-        } else {
-            println!("snake landed, could not find player");
         }
     }
 }
@@ -70,10 +62,6 @@ impl PhysicsSystem for SnakePhysics {
             self.velocity_y = 0.0;
             self.affected_by_gravity = false;
             self.set_x_velocity(collidable_game_objects, sprite);
-            println!(
-                "Snake hit ground, velocity now {}-{}",
-                self.velocity_x, self.velocity_y
-            );
             if self.velocity_x < 0.0 {
                 *rotation = 3.14159;
             } else {

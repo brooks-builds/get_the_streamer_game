@@ -79,7 +79,13 @@ impl<'a> Command<'a> {
     ) -> GameResult<GameObject> {
         let scale = self.get_scale();
         let sprite = self.get_sprite(context);
-        let draw_system = GameObjectDrawSystem::new(sprite, None, scale);
+        let label_color = if self.chatter.is_subscriber {
+            self.chatter.get_color()
+        } else {
+            ggez::graphics::WHITE
+        };
+        let label = Some((self.chatter.name.clone(), label_color));
+        let draw_system = GameObjectDrawSystem::new(sprite, label, scale);
         let size = draw_system.get_size().unwrap_or((50.0, 50.0));
         let physics_system = self.get_physics();
         let game_object = GameObject::new(

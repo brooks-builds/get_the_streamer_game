@@ -899,7 +899,6 @@ dependencies = [
  "lazy_static",
  "rand 0.7.3",
  "twitch_chat_wrapper",
- "twitchchat",
 ]
 
 [[package]]
@@ -2558,9 +2557,9 @@ dependencies = [
 
 [[package]]
 name = "twitch_chat_wrapper"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d5bbc148badbb21fe70a3199fa84477ce9cf49b3b55b4dceb67bc3b037bc049"
+checksum = "8f4565ad3c771c4e5996fc3656ea8d5ea25b446cb64a6b51bb498fc92d82004e"
 dependencies = [
  "dotenv",
  "eyre",
