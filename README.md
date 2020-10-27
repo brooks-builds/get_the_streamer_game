@@ -54,7 +54,7 @@ Download the game from one of the following links.
 
 - [Windows 10](https://get-the-streamer-game.s3-us-west-1.amazonaws.com/get_the_streamer_windows.zip)
 - [Mac]()
-- [Linux (Debian)]()
+- [Linux (Debian)](https://get-the-streamer-game.s3-us-west-1.amazonaws.com/get_the_streamer_linux.zip)
 
 Unzip the game into any directory on your computer.
 
