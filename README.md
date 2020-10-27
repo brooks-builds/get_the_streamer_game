@@ -46,6 +46,8 @@ This file is stored at
 
 **Mac**
 
+`$HOME/Library/Preferences/Brooks-Builds.Get-the-Streamer/high_scores`
+
 **Linux**
 
 `$HOME/.config/getthestreamer/high_scores`
