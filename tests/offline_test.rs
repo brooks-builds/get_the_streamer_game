@@ -23,7 +23,7 @@ fn main() {
 
     let game_thread = thread::spawn(move || {
         let (context, event_loop) =
-            &mut match ContextBuilder::new("Get the Streamer", "Brooks Patton")
+            &mut match ContextBuilder::new("Get the Streamer", "Brooks Builds")
                 .window_setup(WindowSetup::default().title("Get the Streamer"))
                 .window_mode(WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1))
                 .build()
