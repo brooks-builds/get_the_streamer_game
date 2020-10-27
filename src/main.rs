@@ -15,24 +15,19 @@ fn main() {
         twitch_chat_wrapper::run(receive_from_game, send_to_game).unwrap();
     });
 
-    let game_thread = thread::spawn(move || {
-        let (context, event_loop) =
-            &mut match ContextBuilder::new("Get the Streamer", "Brooks Builds")
-                .window_setup(WindowSetup::default().title("Get the Streamer"))
-                .window_mode(WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1))
-                .build()
-            {
-                Ok((context, event_loop)) => (context, event_loop),
-                Err(error) => panic!(error),
-            };
+    let (context, event_loop) = &mut match ContextBuilder::new("Get the Streamer", "Brooks Builds")
+        .window_setup(WindowSetup::default().title("Get the Streamer"))
+        .window_mode(WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1))
+        .build()
+    {
+        Ok((context, event_loop)) => (context, event_loop),
+        Err(error) => panic!(error),
+    };
 
-        let game_state =
-            &mut GameState::new(send_to_twitch, receive_from_twitch, WINDOW_SIZE, context).unwrap();
-        match event::run(context, event_loop, game_state) {
-            Ok(_) => println!("Thanks for playing!"),
-            Err(error) => println!("Error occurred: {}", error),
-        };
-    });
-
-    game_thread.join().unwrap();
+    let game_state =
+        &mut GameState::new(send_to_twitch, receive_from_twitch, WINDOW_SIZE, context).unwrap();
+    match event::run(context, event_loop, game_state) {
+        Ok(_) => println!("Thanks for playing!"),
+        Err(error) => println!("Error occurred: {}", error),
+    };
 }
