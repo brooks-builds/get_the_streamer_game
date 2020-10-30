@@ -184,6 +184,27 @@ impl GameState {
 }
 impl EventHandler for GameState {
     fn update(&mut self, context: &mut Context) -> GameResult {
+        if let Ok(chat_message) = self.receive_from_chat.try_recv() {
+            if matches!(self.running_state, RunningState::Playing) {
+                let chatter_name = if let Some(display_name) = chat_message.display_name {
+                    display_name.clone()
+                } else {
+                    chat_message.name.clone()
+                };
+                match Command::new(
+                    &chat_message.message,
+                    Chatter::new(
+                        chatter_name,
+                        chat_message.color_rgb,
+                        chat_message.subscriber,
+                    ),
+                ) {
+                    Err(error) => self.send_to_chat.send(error.to_owned()).unwrap(),
+                    Ok(command) => self.handle_command(command, context)?,
+                }
+            }
+        }
+
         while timer::check_update_time(context, FRAMERATE_TARGET) {
             match self.running_state {
                 RunningState::StartingSoon => {
@@ -223,25 +244,6 @@ impl EventHandler for GameState {
                         GAME_TIME.as_secs() - self.game_start_time.elapsed().as_secs();
                     if game_time_left == 0 {
                         self.running_state = RunningState::PlayerWon;
-                    }
-
-                    if let Ok(chat_message) = self.receive_from_chat.try_recv() {
-                        let chatter_name = if let Some(display_name) = chat_message.display_name {
-                            display_name.clone()
-                        } else {
-                            chat_message.name.clone()
-                        };
-                        match Command::new(
-                            &chat_message.message,
-                            Chatter::new(
-                                chatter_name,
-                                chat_message.color_rgb,
-                                chat_message.subscriber,
-                            ),
-                        ) {
-                            Err(error) => self.send_to_chat.send(error.to_owned()).unwrap(),
-                            Ok(command) => self.handle_command(command, context)?,
-                        }
                     }
 
                     let arena_size = (
