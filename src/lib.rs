@@ -1,7 +1,9 @@
+mod chat_test_mock;
 mod chatter;
 pub mod command;
 mod credits;
 mod draw_system;
+mod game_assets;
 mod game_object;
 mod game_object_type;
 mod interface;
@@ -11,23 +13,24 @@ mod running_state;
 mod splash;
 mod sprites;
 mod utilities;
-mod game_assets;
-mod chat_test_mock;
 
-use game_assets::GameAssets;
 use chatter::Chatter;
 use command::Command;
 use command::CommandParser;
 use credits::Credits;
 use draw_system::{DrawSystem, PlayerDrawSystem, TimerDrawSystem};
+use game_assets::GameAssets;
 use game_object::GameObject;
 use game_object_type::GameObjectType;
 use ggez::audio;
 use ggez::audio::SoundSource;
+use ggez::conf::WindowMode;
+use ggez::conf::WindowSetup;
 use ggez::event::EventHandler;
-use ggez::{graphics, timer, event, Context, ContextBuilder, GameResult};
 use ggez::graphics::{Image, BLACK};
+use ggez::{event, graphics, timer, Context, ContextBuilder, GameResult};
 use interface::Interface;
+use lazy_static::lazy_static;
 use life_system::{LifeSystem, PlayerLifeSystem};
 use physics::{PhysicsSystem, PlayerPhysics, TimerPhysicsSystem};
 use running_state::RunningState;
@@ -35,21 +38,18 @@ use splash::Splash;
 use sprites::Sprite;
 use std::{collections::HashMap, time::Duration};
 use std::{
-    thread,
     sync::mpsc::{channel, Receiver, Sender},
-    time::Instant,
     sync::Mutex,
+    thread,
+    time::Instant,
 };
 use twitch_chat_wrapper::chat_message::ChatMessage;
-use ggez::conf::WindowMode;
-use ggez::conf::WindowSetup;
-use lazy_static::lazy_static;
 
 lazy_static! {
     static ref GAME_ASSETS: Mutex<GameAssets> = Mutex::new(GameAssets::new());
 }
 
-pub fn get_image_from_assets(context:&mut Context, path: String) -> Image{
+pub fn get_image_from_assets(context: &mut Context, path: String) -> Image {
     return GAME_ASSETS.lock().unwrap().get_image(context, path);
 }
 
@@ -81,7 +81,7 @@ pub struct GameState {
     game_start_time: Instant,
     object_sound: audio::Source,
     scores: HashMap<String, u128>,
-    command_parser:CommandParser
+    command_parser: CommandParser,
 }
 
 impl GameState {
@@ -107,7 +107,7 @@ impl GameState {
         // create player
         let player_scale = 4.0;
         let player_forward_sprite = Sprite::new(context, "/player_forward.png", 8, 1);
-        let player_left_sprite = Sprite::new(context,"/player_left.png", 8, 1);
+        let player_left_sprite = Sprite::new(context, "/player_left.png", 8, 1);
         let player_draw_system =
             PlayerDrawSystem::new(player_left_sprite, player_forward_sprite, player_scale);
         let player_size = player_draw_system.get_size().unwrap_or((50.0, 50.0));
@@ -147,7 +147,7 @@ impl GameState {
             game_start_time,
             object_sound: audio::Source::new(context, "/threeTone1.ogg").unwrap(),
             scores: HashMap::new(),
-            command_parser:CommandParser::new(&command::COMMAND_MAPPING)
+            command_parser: CommandParser::new(&command::COMMAND_MAPPING),
         })
     }
 
@@ -364,32 +364,31 @@ impl EventHandler for GameState {
     }
 }
 
-pub struct RunConfig{
-    pub test_bot_chatters:u32,
-    pub test_command_occurences:&'static[(&'static str, u32)],
-    pub attach_to_twitch_channel:bool,
+pub struct RunConfig {
+    pub test_bot_chatters: u32,
+    pub test_command_occurences: &'static [(&'static str, u32)],
+    pub attach_to_twitch_channel: bool,
 }
 
-impl Default for RunConfig{
+impl Default for RunConfig {
     fn default() -> Self {
-        RunConfig{
-            // test_bot_chatters:0, 
-            // test_command_occurences: &[], 
+        RunConfig {
+            // test_bot_chatters:0,
+            // test_command_occurences: &[],
             // attach_to_twitch_channel: true
-            test_bot_chatters:5, 
+            test_bot_chatters: 5,
             test_command_occurences: &[("fire", 1), ("sword", 1), ("snake", 1), ("heart", 1)],
-            attach_to_twitch_channel: false
+            attach_to_twitch_channel: false,
         }
     }
 }
 
-pub fn run_game( run_config: Option<RunConfig>) {
+pub fn run_game(run_config: Option<RunConfig>) {
     let conf = run_config.unwrap_or_default();
     let (send_to_game, receive_from_twitch) = channel::<ChatMessage>();
     let (send_to_twitch, receive_from_game) = channel::<String>();
 
-    
-    if conf.test_bot_chatters > 0{
+    if conf.test_bot_chatters > 0 {
         chat_test_mock::run(
             send_to_game.clone(),
             conf.test_bot_chatters,
@@ -398,32 +397,27 @@ pub fn run_game( run_config: Option<RunConfig>) {
             250,
             1500,
         );
-    } 
+    }
 
-    if conf.attach_to_twitch_channel{
+    if conf.attach_to_twitch_channel {
         let _twitchchat_thread = thread::spawn(move || {
             twitch_chat_wrapper::run(receive_from_game, send_to_game).unwrap();
         });
     }
-    
-    let game_thread = thread::spawn(move || {
-        let (context, event_loop) =
-            &mut match ContextBuilder::new("Get the Streamer", "Brooks Patton")
-                .window_setup(WindowSetup::default().title("Get the Streamer"))
-                .window_mode(WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1))
-                .build()
-            {
-                Ok((context, event_loop)) => (context, event_loop),
-                Err(error) => panic!(error),
-            };
 
-        let game_state =
-            &mut GameState::new(send_to_twitch, receive_from_twitch, WINDOW_SIZE, context).unwrap();
-        match event::run(context, event_loop, game_state) {
-            Ok(_) => println!("Thanks for playing!"),
-            Err(error) => println!("Error occurred: {}", error),
-        };
-    });
+    let (context, event_loop) = &mut match ContextBuilder::new("Get the Streamer", "Brooks Builds")
+        .window_setup(WindowSetup::default().title("Get the Streamer"))
+        .window_mode(WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1))
+        .build()
+    {
+        Ok((context, event_loop)) => (context, event_loop),
+        Err(error) => panic!(error),
+    };
 
-    game_thread.join().unwrap();
+    let game_state =
+        &mut GameState::new(send_to_twitch, receive_from_twitch, WINDOW_SIZE, context).unwrap();
+    match event::run(context, event_loop, game_state) {
+        Ok(_) => println!("Thanks for playing!"),
+        Err(error) => println!("Error occurred: {}", error),
+    };
 }
