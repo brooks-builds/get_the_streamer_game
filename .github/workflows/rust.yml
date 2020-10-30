@@ -16,6 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install Packages
-        run: apt install libasound2-dev libudev-dev pkg-config
+        run: sudo apt install libasound2-dev libudev-dev pkg-config
       - name: Build
         run: cargo build --release
