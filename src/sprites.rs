@@ -5,6 +5,7 @@ use graphics::Color;
 use std::time::Duration;
 use crate::get_image_from_assets;
 
+#[derive(Clone)]
 pub struct SpriteImageDef{
     pub image_path: &'static str,
     pub frames_x: u16,

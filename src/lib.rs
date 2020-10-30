@@ -12,10 +12,12 @@ mod splash;
 mod sprites;
 mod utilities;
 mod game_assets;
+mod chat_test_mock;
 
 use game_assets::GameAssets;
 use chatter::Chatter;
 use command::Command;
+use command::CommandParser;
 use credits::Credits;
 use draw_system::{DrawSystem, PlayerDrawSystem, TimerDrawSystem};
 use game_object::GameObject;
@@ -79,6 +81,7 @@ pub struct GameState {
     game_start_time: Instant,
     object_sound: audio::Source,
     scores: HashMap<String, u128>,
+    command_parser:CommandParser
 }
 
 impl GameState {
@@ -144,6 +147,7 @@ impl GameState {
             game_start_time,
             object_sound: audio::Source::new(context, "/threeTone1.ogg").unwrap(),
             scores: HashMap::new(),
+            command_parser:CommandParser::new(&command::COMMAND_MAPPING)
         })
     }
 
@@ -254,7 +258,7 @@ impl EventHandler for GameState {
                         } else {
                             chat_message.name.clone()
                         };
-                        match Command::new(
+                        match self.command_parser.parse_message(
                             &chat_message.message,
                             Chatter::new(
                                 chatter_name,
@@ -360,15 +364,48 @@ impl EventHandler for GameState {
     }
 }
 
+pub struct RunConfig{
+    pub test_bot_chatters:u32,
+    pub test_command_occurences:&'static[(&'static str, u32)],
+    pub attach_to_twitch_channel:bool,
+}
 
-pub fn run_game() {
+impl Default for RunConfig{
+    fn default() -> Self {
+        RunConfig{
+            // test_bot_chatters:0, 
+            // test_command_occurences: &[], 
+            // attach_to_twitch_channel: true
+            test_bot_chatters:5, 
+            test_command_occurences: &[("fire", 1), ("sword", 1), ("snake", 1), ("heart", 1)],
+            attach_to_twitch_channel: false
+        }
+    }
+}
+
+pub fn run_game( run_config: Option<RunConfig>) {
+    let conf = run_config.unwrap_or_default();
     let (send_to_game, receive_from_twitch) = channel::<ChatMessage>();
     let (send_to_twitch, receive_from_game) = channel::<String>();
 
-    let _twitchchat_thread = thread::spawn(move || {
-        twitch_chat_wrapper::run(receive_from_game, send_to_game).unwrap();
-    });
+    
+    if conf.test_bot_chatters > 0{
+        chat_test_mock::run(
+            send_to_game.clone(),
+            conf.test_bot_chatters,
+            conf.test_command_occurences,
+            SPLASH_DURATION,
+            250,
+            1500,
+        );
+    } 
 
+    if conf.attach_to_twitch_channel{
+        let _twitchchat_thread = thread::spawn(move || {
+            twitch_chat_wrapper::run(receive_from_game, send_to_game).unwrap();
+        });
+    }
+    
     let game_thread = thread::spawn(move || {
         let (context, event_loop) =
             &mut match ContextBuilder::new("Get the Streamer", "Brooks Patton")

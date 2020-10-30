@@ -8,20 +8,21 @@ use twitch_chat_wrapper::twitchchat::FromIrcMessage;
 
 pub fn run(
     send_incoming_chat_message: Sender<ChatMessage>,
-    num_bot_users: u64,
+    num_bot_users: u32,
+    command_occurences: &'static[(&'static str, u32)],
     initial_commands_delay: Duration,
     min_command_interval_ms: u64,
     max_command_interval_ms: u64,
 ) -> () {
     thread::spawn(move || {
         //The commands we'll be selecting from and the number of times each will be in the selection pool
-        let command_occurences = [("fire", 1), ("sword", 1), ("snake", 1), ("heart", 1)];
+        //let command_occurences = [("fire", 1), ("sword", 1), ("snake", 1), ("heart", 1)];
 
         //Generate command pool
         let command_pool = command_occurences
             .iter()
             .fold(Vec::<&str>::new(), |mut v, c| {
-                v.extend(vec![c.0; c.1].iter());
+                v.extend(vec![c.0; c.1 as usize].iter());
                 return v;
             });
 
