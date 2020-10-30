@@ -32,7 +32,7 @@ impl Sprite {
         let single_sprite_height_fraction = single_sprite_height as f32 / image_height as f32;
         let rect_index = 0;
         let index_change_duration = Duration::from_millis(100);
-        let next_time_to_change = index_change_duration.clone();
+        let next_time_to_change = index_change_duration;
 
         for y_index in 0..sprites_down {
             for x_index in 0..sprites_accross {

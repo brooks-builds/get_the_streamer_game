@@ -15,7 +15,7 @@ use rand::seq::IteratorRandom;
 
 const VELOCITY_Y: f32 = -2.0;
 const DEFAULT_STREAMER_WIN_MESSAGE: &str = "Streamer won!";
-const CONTRIBUTORS: [&'static str; 6] = [
+const CONTRIBUTORS: [&str; 6] = [
     "brookspatton",
     "dmb1107",
     "LordMZTE",
@@ -118,7 +118,7 @@ impl Credits {
         if let Some(messages) = utilities::load_messages(file_name) {
             messages
                 .choose(&mut rng)
-                .unwrap_or(DEFAULT_STREAMER_WIN_MESSAGE.to_owned())
+                .unwrap_or_else(|| DEFAULT_STREAMER_WIN_MESSAGE.to_owned())
         } else {
             DEFAULT_STREAMER_WIN_MESSAGE.to_owned()
         }
@@ -178,7 +178,7 @@ impl Credits {
 
         self.all_credits.retain(|credit| credit.1.y > -100.0);
 
-        self.all_credits.len() > 0
+        !self.all_credits.is_empty()
     }
 
     pub fn draw(&self, context: &mut Context) -> GameResult<()> {

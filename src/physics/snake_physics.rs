@@ -23,7 +23,7 @@ impl SnakePhysics {
         }
     }
 
-    fn set_x_velocity(&mut self, collidable_game_objects: &Vec<GameObject>, sprite: &Rect) {
+    fn set_x_velocity(&mut self, collidable_game_objects: &[GameObject], sprite: &Rect) {
         let player = collidable_game_objects
             .iter()
             .find(|game_object| game_object.my_type == GameObjectType::Player);
@@ -45,7 +45,7 @@ impl PhysicsSystem for SnakePhysics {
         screen_size: (f32, f32),
         gravity_force: f32,
         _context: &mut Context,
-        collidable_game_objects: &Vec<GameObject>,
+        collidable_game_objects: &[GameObject],
         rotation: &mut f32,
         _life_system: &mut Option<Box<dyn LifeSystem>>,
     ) -> Result<()> {
@@ -63,7 +63,7 @@ impl PhysicsSystem for SnakePhysics {
             self.affected_by_gravity = false;
             self.set_x_velocity(collidable_game_objects, sprite);
             if self.velocity_x < 0.0 {
-                *rotation = 3.14159;
+                *rotation = std::f32::consts::PI;
             } else {
                 *rotation = 0.0;
             }

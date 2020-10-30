@@ -47,7 +47,7 @@ impl Interface {
                 single_drop_zone_width,
                 DROP_ZONE_HEIGHT,
             );
-            drop_zones.push(drop_zone.clone());
+            drop_zones.push(drop_zone);
 
             let mut label = Text::new(format!("{}", count));
 

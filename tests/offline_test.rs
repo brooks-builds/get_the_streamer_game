@@ -14,7 +14,7 @@ fn main() {
     let (send_to_twitch, _receive_from_game) = channel::<String>();
 
     chat_test_mock::run(
-        send_to_game.clone(),
+        send_to_game,
         5,
         get_the_streamer_game::SPLASH_DURATION,
         250,
