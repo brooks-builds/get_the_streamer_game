@@ -15,6 +15,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          components: clippy
+      - name: Check formatting
+        run: cargo fmt
+      - uses: actions-rs/clippy@master
       - name: Install Packages
         run: sudo apt install libasound2-dev libudev-dev pkg-config
       - name: Build
