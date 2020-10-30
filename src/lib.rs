@@ -15,7 +15,7 @@ mod sprites;
 mod utilities;
 
 use chatter::Chatter;
-use command::Command;
+use command::CommandInstance;
 use command::CommandParser;
 use credits::Credits;
 use draw_system::{DrawSystem, PlayerDrawSystem, TimerDrawSystem};
@@ -61,12 +61,6 @@ const FRAMERATE_TARGET: u32 = 60;
 const SCORES_FILE_NAME: &'static str = "/high_scores";
 
 const WINDOW_SIZE: (f32, f32) = (1920.0, 1080.0);
-
-// thread_local!(static game_context: Option<&'static mut Context> = None);
-
-// pub fn get_game_context() -> Option<&'static mut Context>{
-//     return game_context.with;
-//}
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -153,7 +147,7 @@ impl GameState {
 
     fn handle_command(
         &mut self,
-        command: Option<Command>,
+        command: Option<CommandInstance>,
         context: &mut Context,
     ) -> GameResult<()> {
         if let Some(command) = command {
