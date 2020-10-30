@@ -73,7 +73,7 @@ impl PlayerPhysics {
 
     fn get_colliding_with(
         &self,
-        collidable_game_objects: &Vec<GameObject>,
+        collidable_game_objects: &[GameObject],
         location: &Rect,
     ) -> Option<GameObject> {
         for other_game_object in collidable_game_objects {
@@ -94,7 +94,7 @@ impl PhysicsSystem for PlayerPhysics {
         arena: (f32, f32),
         gravity_force: f32,
         context: &mut Context,
-        collidable_game_objects: &Vec<GameObject>,
+        collidable_game_objects: &[GameObject],
         _rotation: &mut f32,
         life_system: &mut Option<Box<dyn LifeSystem>>,
     ) -> Result<()> {
@@ -106,16 +106,14 @@ impl PhysicsSystem for PlayerPhysics {
                 if GameObjectType::Heart == game_object.my_type {
                     player_life_system.gain_life();
                     self.heart_sound.play().unwrap();
-                } else {
-                    if player_life_system.hit() {
-                        self.hit_sound.play().unwrap();
-                        let chatter = if let Some(chatter) = game_object.chatter {
-                            chatter
-                        } else {
-                            Chatter::new(DEFAULT_CHATTER_NAME.to_owned(), (255, 255, 255), false)
-                        };
-                        self.player_hit_object.send(chatter)?;
-                    }
+                } else if player_life_system.hit() {
+                    self.hit_sound.play().unwrap();
+                    let chatter = if let Some(chatter) = game_object.chatter {
+                        chatter
+                    } else {
+                        Chatter::new(DEFAULT_CHATTER_NAME.to_owned(), (255, 255, 255), false)
+                    };
+                    self.player_hit_object.send(chatter)?;
                 }
             }
         }

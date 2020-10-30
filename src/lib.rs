@@ -41,7 +41,7 @@ const GAME_TIME: Duration = Duration::from_secs(120);
 pub const SPLASH_DURATION: Duration = Duration::from_secs(15);
 const LIVES: u8 = 3;
 const FRAMERATE_TARGET: u32 = 60;
-const SCORES_FILE_NAME: &'static str = "/high_scores";
+const SCORES_FILE_NAME: &str = "/high_scores";
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -136,7 +136,7 @@ impl GameState {
                 self.interface.get_column_coordinates_by_index(command.id),
                 context,
             )?);
-            let score = self.scores.entry(chatter.name.clone()).or_insert(0);
+            let score = self.scores.entry(chatter.name).or_insert(0);
             *score += 1;
         }
         Ok(())
@@ -187,7 +187,7 @@ impl EventHandler for GameState {
         if let Ok(chat_message) = self.receive_from_chat.try_recv() {
             if matches!(self.running_state, RunningState::Playing) {
                 let chatter_name = if let Some(display_name) = chat_message.display_name {
-                    display_name.clone()
+                    display_name
                 } else {
                     chat_message.name.clone()
                 };
