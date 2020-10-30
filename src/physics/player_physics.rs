@@ -41,7 +41,8 @@ impl PlayerPhysics {
         if input::keyboard::is_key_pressed(context, KeyCode::A) {
             self.velocity.x -= MOVE_FORCE;
         } else if input::keyboard::is_key_pressed(context, KeyCode::S)
-            || input::keyboard::is_key_pressed(context, KeyCode::D) {
+            || input::keyboard::is_key_pressed(context, KeyCode::D)
+        {
             self.velocity.x += MOVE_FORCE;
         }
 
