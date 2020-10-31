@@ -22,7 +22,7 @@ impl PhysicsSystem for HeartPhysics {
         _screen_size: (f32, f32),
         gravity_force: f32,
         _context: &mut Context,
-        collidable_game_objects: &Vec<GameObject>,
+        collidable_game_objects: &[GameObject],
         _rotation: &mut f32,
         life_system: &mut Option<Box<dyn LifeSystem>>,
     ) -> Result<()> {

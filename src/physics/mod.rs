@@ -22,13 +22,14 @@ pub trait PhysicsSystem
 where
     Self: std::fmt::Debug,
 {
+    #[allow(clippy::clippy::too_many_arguments)]
     fn update(
         &mut self,
         location: &mut Rect,
         screen_size: (f32, f32),
         gravity_force: f32,
         context: &mut Context,
-        collidable_game_objects: &Vec<GameObject>,
+        collidable_game_objects: &[GameObject],
         rotation: &mut f32,
         life_system: &mut Option<Box<dyn LifeSystem>>,
     ) -> Result<()>;

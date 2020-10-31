@@ -19,6 +19,7 @@ pub struct GameObject {
 }
 
 impl GameObject {
+    #[allow(clippy::clippy::too_many_arguments)]
     pub fn new(
         x: f32,
         y: f32,
@@ -48,7 +49,7 @@ impl GameObject {
         time_since_start: std::time::Duration,
         screen_size: (f32, f32),
         context: &mut Context,
-        collidable_game_objects: &Vec<GameObject>,
+        collidable_game_objects: &[GameObject],
     ) -> Result<()> {
         if let Some(physics_system) = &mut self.physics_system {
             physics_system.update(
@@ -87,7 +88,7 @@ impl GameObject {
             )?;
         }
 
-        return Ok(());
+        Ok(())
     }
 
     pub fn is_alive(&self) -> bool {
@@ -110,12 +111,12 @@ impl GameObject {
 impl Clone for GameObject {
     fn clone(&self) -> Self {
         GameObject {
-            location: self.location.clone(),
+            location: self.location,
             draw_system: None,
             physics_system: None,
             collidable: self.collidable,
             chatter: self.chatter.clone(),
-            rotation: self.rotation.clone(),
+            rotation: self.rotation,
             my_type: self.my_type.clone(),
             life_system: None,
         }
