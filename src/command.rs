@@ -64,7 +64,7 @@ impl Command {
                         Err("The given column is outside of the arena")
                     }
                 }
-                Err(_error) => return Err("I couldn't tell what column to drop into"),
+                Err(_error) => Err("I couldn't tell what column to drop into"),
             }
         } else {
             let mut rng = rand::thread_rng();

@@ -28,7 +28,7 @@ impl PhysicsSystem for FirePhysics {
         screen_height: (f32, f32),
         gravity_force: f32,
         _context: &mut Context,
-        _collidable_game_objects: &Vec<GameObject>,
+        _collidable_game_objects: &[GameObject],
         _rotation: &mut f32,
         _life_system: &mut Option<Box<dyn LifeSystem>>,
     ) -> Result<()> {
