@@ -896,6 +896,7 @@ dependencies = [
  "eyre",
  "fs_extra",
  "ggez",
+ "lazy_static",
  "rand 0.7.3",
  "twitch_chat_wrapper",
 ]
