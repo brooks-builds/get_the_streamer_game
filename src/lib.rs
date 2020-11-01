@@ -25,22 +25,14 @@ use ggez::conf::WindowMode;
 use ggez::conf::WindowSetup;
 use ggez::graphics::Image;
 use ggez::{event, Context, ContextBuilder};
+use std::sync::Mutex;
 
 use lazy_static::lazy_static;
 use life_system::LifeSystem;
 use physics::PhysicsSystem;
 use sprites::Sprite;
-use std::time::Duration;
-use std::{
-    sync::mpsc::channel,
-    sync::Mutex,
-    thread,
-};
-use twitch_chat_wrapper::chat_message::ChatMessage;
 
 const DROP_ZONE_COUNT: u8 = 10;
-pub const SPLASH_DURATION: Duration = Duration::from_secs(15);
-
 
 lazy_static! {
     static ref GAME_ASSETS: Mutex<GameAssets> = Mutex::new(GameAssets::new());
@@ -72,30 +64,10 @@ impl Default for RunConfig {
 }
 
 pub fn run_game(run_config: Option<RunConfig>) {
-    let conf = run_config.unwrap_or_default();
-    let (send_to_game, receive_from_twitch) = channel::<ChatMessage>();
-    let (send_to_twitch, receive_from_game) = channel::<String>();
-
-    if conf.test_bot_chatters > 0 {
-        chat_test_mock::run(
-            send_to_game.clone(),
-            conf.test_bot_chatters,
-            conf.test_command_occurences,
-            SPLASH_DURATION,
-            250,
-            1500,
-        );
-    }
-
-    if conf.attach_to_twitch_channel {
-        let _twitchchat_thread = thread::spawn(move || {
-            twitch_chat_wrapper::run(receive_from_game, send_to_game).unwrap();
-        });
-    }
-
+        
     let (context, event_loop) = &mut match ContextBuilder::new("Get the Streamer", "Brooks Builds")
         .window_setup(WindowSetup::default().title("Get the Streamer"))
-        .window_mode(WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1))
+        .window_mode(WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1).resizable(true))
         .build()
     {
         Ok((context, event_loop)) => (context, event_loop),
@@ -103,7 +75,7 @@ pub fn run_game(run_config: Option<RunConfig>) {
     };
 
     let game_state =
-        &mut GameState::new(send_to_twitch, receive_from_twitch, WINDOW_SIZE, context).unwrap();
+        &mut GameState::new(run_config, WINDOW_SIZE, context).unwrap();
     match event::run(context, event_loop, game_state) {
         Ok(_) => println!("Thanks for playing!"),
         Err(error) => println!("Error occurred: {}", error),
