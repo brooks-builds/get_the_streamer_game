@@ -43,9 +43,11 @@ pub fn run(
             let (_pos, msg_a) = twitch_chat_wrapper::twitchchat::irc::parse_one(&input).unwrap();
 
             let test_msg: Privmsg = Privmsg::from_irc(msg_a).unwrap();
-            send_incoming_chat_message
-                .send(ChatMessage::new(test_msg))
-                .unwrap();
+            match send_incoming_chat_message
+                .send(ChatMessage::new(test_msg)){
+                    Ok(_) => (),
+                    Err(error) => println!("Error while sending bot chat command: {}", error),
+                }
 
             thread::sleep(Duration::from_millis(
                 rng.gen_range(min_command_interval_ms, max_command_interval_ms),
