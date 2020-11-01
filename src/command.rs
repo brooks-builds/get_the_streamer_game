@@ -194,5 +194,3 @@ impl GameCommandHandlers {
         life_system: || Some(Box::new(HeartLifeSystem::new())),
     };
 }
-
-pub static GAME_COMMAND_HANDLERS: GameCommandHandlers = GameCommandHandlers {};
