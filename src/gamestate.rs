@@ -1,24 +1,21 @@
 use crate::{
+    chat_test_mock,
     chatter::Chatter,
     command,
     command::CommandInstance,
     command::CommandParser,
     credits::Credits,
-    draw_system::{DrawSystem, PlayerDrawSystem, TimerDrawSystem},
+    draw_system::{DrawSystem, PlayerDrawSystem},
     game_object::GameObject,
     game_object_type::GameObjectType,
     interface::Interface,
     life_system::PlayerLifeSystem,
-    physics::{PlayerPhysics, TimerPhysicsSystem},
+    physics::PlayerPhysics,
     running_state::RunningState,
-    splash::Splash,
     sprites::Sprite,
-    utilities,
-    RunConfig,
-    chat_test_mock
+    utilities, RunConfig,
 };
 
-use twitch_chat_wrapper::chat_message::ChatMessage;
 use ggez::audio;
 use ggez::audio::SoundSource;
 use ggez::event::EventHandler;
@@ -26,21 +23,23 @@ use ggez::graphics::BLACK;
 use ggez::{graphics, timer, Context, GameResult};
 use std::{
     collections::HashMap,
-    sync::mpsc::{
-      channel, 
-      Receiver, 
-      Sender
-    },
+    sync::mpsc::{channel, Receiver, Sender},
     thread,
     time::Duration,
     time::Instant,
 };
+use twitch_chat_wrapper::chat_message::ChatMessage;
 
 const LIVES: u8 = 3;
-const FRAMERATE_TARGET: u32 = 60;
+pub const FRAMERATE_TARGET: u32 = 60;
 const GAME_TIME: Duration = Duration::from_secs(120);
 const SPLASH_DURATION: Duration = Duration::from_secs(15);
 const SCORES_FILE_NAME: &str = "/high_scores";
+
+struct GameArea {
+    pixel_width: f32,
+    pixel_height: f32,
+}
 
 pub struct GameState {
     send_to_chat: Sender<String>,
@@ -51,7 +50,6 @@ pub struct GameState {
     player_hit_object_event: Receiver<Chatter>,
     running_state: RunningState,
     credits: Option<Credits>,
-    splash: Splash,
     game_start_time: Instant,
     object_sound: audio::Source,
     scores: HashMap<String, u128>,
@@ -59,7 +57,11 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new(run_config:Option<RunConfig>, screen_size: (f32, f32), context: &mut Context) -> GameResult<GameState> {
+    pub fn new(
+        run_config: Option<RunConfig>,
+        screen_size: (f32, f32),
+        context: &mut Context,
+    ) -> GameResult<GameState> {
         let conf = run_config.unwrap_or_default();
         let (send_to_game, receive_from_chat) = channel::<ChatMessage>();
         let (send_to_chat, receive_from_game) = channel::<String>();
@@ -81,17 +83,8 @@ impl GameState {
             });
         }
         let _ = send_to_chat.send(String::from("Chat vs. Streamer game started! Use the commands on screen to drop objects that the streamer will attempt to avoid. You get 1 point for every object you drop and 10 points for every time you hit the player!"));
-        let mut interface = Interface::new(context, screen_size, LIVES)?;
-
-        // create timer block
-        let timer_game_object = Self::create_timer(
-            screen_size,
-            context,
-            interface.width,
-            SPLASH_DURATION,
-            (0.0, 1.0, 0.0),
-        )?;
-        interface.add_game_object(timer_game_object);
+        let interface =
+            Interface::new(context, LIVES, crate::DROP_ZONE_COUNT, SPLASH_DURATION)?;
 
         // create player
         let player_scale = 4.0;
@@ -116,11 +109,7 @@ impl GameState {
         );
 
         let game_objects = vec![player];
-        let splash = Splash::new(
-            (screen_size.0 - interface.width, screen_size.1),
-            context,
-            SPLASH_DURATION,
-        );
+
         let game_start_time = Instant::now();
 
         Ok(GameState {
@@ -132,7 +121,6 @@ impl GameState {
             player_hit_object_event: receive_player_hit_object_event,
             running_state: RunningState::StartingSoon,
             credits: None,
-            splash,
             game_start_time,
             object_sound: audio::Source::new(context, "/threeTone1.ogg").unwrap(),
             scores: HashMap::new(),
@@ -162,32 +150,6 @@ impl GameState {
         self.game_objects
             .iter()
             .find(|game_object| game_object.my_type == GameObjectType::Player)
-    }
-
-    fn create_timer(
-        screen_size: (f32, f32),
-        context: &mut Context,
-        interface_width: f32,
-        duration: Duration,
-        color: (f32, f32, f32),
-    ) -> GameResult<GameObject> {
-        let timer_draw_system = TimerDrawSystem::new(screen_size, context, color)?;
-        let timer_size = timer_draw_system.get_size().unwrap_or((5.0, screen_size.1));
-        let timer_physics_system =
-            TimerPhysicsSystem::new(timer_size.1, duration, FRAMERATE_TARGET as f32);
-        let timer_game_object = GameObject::new(
-            screen_size.0 - interface_width,
-            0.0,
-            Some(Box::new(timer_draw_system)),
-            timer_size.0,
-            timer_size.1,
-            Some(Box::new(timer_physics_system)),
-            false,
-            None,
-            GameObjectType::Interface,
-            None,
-        );
-        Ok(timer_game_object)
     }
 
     fn update_scores(&self, high_scores: &mut HashMap<String, u128>) {
@@ -227,16 +189,14 @@ impl EventHandler for GameState {
                     if let Err(error) = self.interface.update(context, LIVES) {
                         eprintln!("Error updating game objects in interface: {}", error);
                     }
-                    if self.splash.is_done() {
+                    if self.interface.splash_is_done() {
                         self.running_state = RunningState::Playing;
-                        let timer = Self::create_timer(
-                            self.screen_size,
+                        self.interface.set_timer(
                             context,
-                            self.interface.width,
+                            Instant::now(),
                             GAME_TIME,
-                            (1.0, 0.0, 0.0),
-                        )?;
-                        self.interface.add_game_object(timer);
+                            (1.0, 0.0, 0.0, 1.0),
+                        );
                         self.game_start_time = Instant::now();
                     }
                 }
@@ -263,7 +223,7 @@ impl EventHandler for GameState {
                     }
 
                     let arena_size = (
-                        self.screen_size.0 - self.interface.width,
+                        self.screen_size.0 - self.interface.sidebar_width,
                         self.screen_size.1,
                     );
 
@@ -334,11 +294,10 @@ impl EventHandler for GameState {
     fn draw(&mut self, context: &mut Context) -> GameResult {
         graphics::clear(context, BLACK);
 
-        self.interface
-            .draw(context, self.screen_size, &self.running_state)?;
+        self.interface.draw(context, &self.running_state)?;
 
         match self.running_state {
-            RunningState::StartingSoon => self.splash.draw(context)?,
+            RunningState::StartingSoon => (),
             RunningState::Playing => {
                 for game_object in self.game_objects.iter() {
                     game_object.draw(context)?;
@@ -352,5 +311,20 @@ impl EventHandler for GameState {
         }
 
         graphics::present(context)
+    }
+
+    fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
+        self.screen_size = (width, height);
+
+        let _ = graphics::set_screen_coordinates(
+            ctx,
+            graphics::Rect {
+                x: 0.0,
+                y: 0.0,
+                w: width,
+                h: height,
+            },
+        );
+        self.interface.update_screen_size(ctx, width, height);
     }
 }
