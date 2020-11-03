@@ -24,6 +24,22 @@ impl PlayerLifeSystem {
             frame_count: IFRAMES_REDUCE_EVERY,
         }
     }
+
+    fn update_iframes(&mut self) {
+        if self.iframes > IFRAMES_MIN {
+            self.frame_count -= 1;
+            if self.frame_count == 0 {
+                self.frame_count = IFRAMES_REDUCE_EVERY;
+                self.iframes -= IFRAMES_REDUCE_BY;
+            }
+        }
+    }
+
+    fn update_iframes_left(&mut self) {
+        if self.iframes_left > 0 {
+            self.iframes_left -= 1;
+        }
+    }
 }
 
 impl LifeSystem for PlayerLifeSystem {
@@ -42,17 +58,8 @@ impl LifeSystem for PlayerLifeSystem {
     }
 
     fn update(&mut self, _screen_size: (f32, f32), _location: &Rect) {
-        if self.iframes > IFRAMES_MIN {
-            self.frame_count -= 1;
-            if self.frame_count == 0 {
-                self.frame_count = IFRAMES_REDUCE_EVERY;
-                self.iframes -= IFRAMES_REDUCE_BY;
-            }
-        }
-
-        if self.iframes_left > 0 {
-            self.iframes_left -= 1;
-        }
+        self.update_iframes();
+        self.update_iframes_left();
     }
 
     fn gain_life(&mut self) {
