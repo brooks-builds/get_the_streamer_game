@@ -7,7 +7,7 @@ use ggez::graphics::{Color, DrawMode, DrawParam, Mesh, MeshBuilder, Rect};
 use ggez::nalgebra::Point2;
 use ggez::{graphics, timer, Context, GameResult};
 
-use super::{dropzonearea::DropZoneArea, sidebar::SideBar, splash::Splash, uitimer::UITimer};
+use super::{UIComponent, dropzonearea::DropZoneArea, sidebar::SideBar, splash::Splash, uitimer::UITimer};
 
 const DROP_ZONE_HEIGHT: f32 = 50.0;
 const TIMER_WIDTH: f32 = 5.0;
@@ -169,10 +169,10 @@ impl Interface {
         let game_area_center_x :f32 = sidebar_left * 0.5;
         let game_area_center_y :f32 = DROP_ZONE_HEIGHT + (screen_coords.h - DROP_ZONE_HEIGHT) * 0.5;
 
-        self.drop_zone_area.draw_drop_zones(context)?;
+        self.drop_zone_area.draw(context, 0.0, 0.0)?;
 
         self.sidebar
-            .draw(context, sidebar_left, 0.0);
+            .draw(context, sidebar_left, 0.0)?;
 
         let _ = match &self.active_timer {
             Some(timer) => timer.draw(context, sidebar_left, 0.0),

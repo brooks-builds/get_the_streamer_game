@@ -4,6 +4,8 @@ use ggez::{
     Context, GameResult,
 };
 
+use super::UIComponent;
+
 pub struct DropZoneArea {
     width: f32,
     height: f32,
@@ -31,14 +33,6 @@ impl DropZoneArea {
                 height,
             ),
         }
-    }
-
-    pub fn width(&self) -> f32 {
-        return self.width;
-    }
-    
-    pub fn height(&self) -> f32 {
-        return self.height;
     }
 
     fn create_drop_zone_background(context: &mut Context, rect: Rect) -> Mesh {
@@ -82,15 +76,24 @@ impl DropZoneArea {
 
         return drop_zones;
     }
+}
 
-    pub fn draw_drop_zones(&self, context: &mut Context) -> GameResult<()> {
+impl UIComponent for DropZoneArea {
+    fn width(&self) -> f32 {
+        return self.width;
+    }
+
+    fn height(&self) -> f32 {
+        return self.height;
+    }
+    fn draw(&self, context: &mut Context, x: f32, y: f32) -> GameResult {
         self.drop_zones
             .iter()
             .try_for_each(|drop_zone: &Rect| -> GameResult<()> {
                 graphics::draw(
                     context,
                     &self.drop_zone_background,
-                    DrawParam::new().dest(Point2::new(drop_zone.x, drop_zone.y)),
+                    DrawParam::new().dest(Point2::new(drop_zone.x+x, drop_zone.y+y)),
                 )?;
                 Ok(())
             })?;
@@ -103,8 +106,8 @@ impl DropZoneArea {
                     context,
                     label,
                     DrawParam::new().dest(Point2::new(
-                        index as f32 * single_drop_zone_width,
-                        self.height / 2.0 - label_height / 2.0,
+                        x + index as f32 * single_drop_zone_width,
+                        y + self.height / 2.0 - label_height / 2.0,
                     )),
                 )
             },

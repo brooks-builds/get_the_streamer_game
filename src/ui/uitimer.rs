@@ -1,6 +1,13 @@
 use std::time::{Duration, Instant};
 
-use ggez::{Context, GameResult, graphics::{Color, DrawMode, DrawParam, Mesh, MeshBuilder, Rect}, nalgebra::Point2, graphics};
+use ggez::{
+    graphics,
+    graphics::{Color, DrawMode, DrawParam, Mesh, MeshBuilder, Rect},
+    nalgebra::Point2,
+    Context, GameResult,
+};
+
+use super::UIComponent;
 
 pub struct UITimer {
     duration: Duration,
@@ -55,7 +62,31 @@ impl UITimer {
         mesh
     }
 
-    pub fn draw(&self, context: &mut Context, x: f32, y: f32) -> GameResult {
+    pub fn update(&self, _time_since_start: std::time::Duration, _context: &mut Context) {}
+
+    pub fn get_start_time(&self) -> Instant {
+        return self.start_time;
+    }
+
+    pub fn get_duration(&self) -> Duration {
+        return self.duration;
+    }
+
+    pub fn get_color(&self) -> (f32, f32, f32, f32) {
+        return self.color;
+    }
+}
+
+impl UIComponent for UITimer {
+    fn width(&self) -> f32 {
+        return self.width;
+    }
+
+    fn height(&self) -> f32 {
+        return self.height;
+    }
+    
+    fn draw(&self, context: &mut Context, x: f32, y: f32) -> GameResult {
         let elapsed_fraction = self.get_remaining().as_secs_f32() / self.duration.as_secs_f32();
         graphics::draw(
             context,
@@ -65,27 +96,5 @@ impl UITimer {
                 .dest(Point2::new(x, y))
                 .scale([1.0_f32, elapsed_fraction]),
         )
-    }
-
-    pub fn update(&self, _time_since_start: std::time::Duration, _context: &mut Context) {}
-
-    pub fn width(&self) -> f32 {
-        return self.width;
-    }
-
-    pub fn height(&self) -> f32 {
-        return self.height;
-    }
-
-    pub fn get_start_time(&self) -> Instant{
-      return self.start_time;
-    }
-
-    pub fn get_duration(&self) -> Duration{
-      return self.duration;
-    }
-
-    pub fn get_color(&self) -> (f32,f32,f32,f32){
-      return self.color;
     }
 }

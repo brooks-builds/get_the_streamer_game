@@ -4,9 +4,12 @@ use ggez::{
     Context, GameResult,
 };
 
+use super::UIComponent;
+
 pub struct Splash {
+    width: f32,
+    height: f32,
     text: Text,
-    text_width: f32,
 }
 
 impl Splash {
@@ -15,18 +18,26 @@ impl Splash {
         let mut text = Text::new(display_string);
         let scale: f32 = max_height.min(max_width/display_string.len() as f32).floor();
         text.set_font(Font::default(), Scale::uniform(scale));
-        let text_width = text.dimensions(context).0 as f32;
+        let dimensions = text.dimensions(context);
 
-        Self { text, text_width }
+        Self { width:dimensions.0 as f32, height: dimensions.1 as f32, text }
+    }
+}
+
+impl UIComponent for Splash{
+    fn width(&self) -> f32 {
+        return self.width;
     }
 
-    pub fn draw(&self, context: &mut Context, x: f32, y: f32) -> GameResult<()> {
-        
+    fn height(&self) -> f32 {
+        return self.height;
+    }
+    fn draw(&self, context: &mut Context, x: f32, y: f32) -> GameResult {
         graphics::draw(
             context,
             &self.text,
             DrawParam::new().dest(Point2::new(
-                x - self.text_width * 0.5,
+                x - self.width * 0.5,
                 y,
             )),
         )
