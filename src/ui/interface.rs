@@ -10,6 +10,7 @@ use ggez::{graphics, timer, Context, GameResult};
 use super::{dropzonearea::DropZoneArea, sidebar::SideBar, splash::Splash, uitimer::UITimer};
 
 const DROP_ZONE_HEIGHT: f32 = 50.0;
+const TIMER_WIDTH: f32 = 5.0;
 const GAME_OVER_FONT_SIZE: f32 = 150.0;
 
 pub struct Interface {
@@ -56,7 +57,7 @@ impl Interface {
                 drop_zone_area_width,
                 DROP_ZONE_HEIGHT,
             ),
-            active_timer: Some(UITimer::new(context, start_time, splash_duration,5.0, screen_height, (0.0, 1.0, 0.0, 1.0))),
+            active_timer: Some(UITimer::new(context, start_time, splash_duration, TIMER_WIDTH, screen_height, (0.0, 1.0, 0.0, 1.0))),
             sidebar: SideBar::new(context, sidebar_width, screen_height, player_lives),
             full_mask: Self::create_full_mask(context, screen_width, screen_height),
             splash,
@@ -75,7 +76,7 @@ impl Interface {
         duration: Duration,
         color: (f32, f32, f32, f32),
     ) {
-        self.active_timer = Some(UITimer::new(context, start_time, duration, 5.0, self.height, color));
+        self.active_timer = Some(UITimer::new(context, start_time, duration, TIMER_WIDTH, self.height, color));
     }
 
     pub fn update_screen_size(
