@@ -6,14 +6,13 @@ mod draw_system;
 mod game_assets;
 mod game_object;
 mod game_object_type;
-mod interface;
 mod life_system;
 mod physics;
 mod running_state;
-mod splash;
 mod sprites;
 mod utilities;
 mod gamestate;
+mod ui;
 
 use chatter::Chatter;
 use draw_system::{DrawSystem};

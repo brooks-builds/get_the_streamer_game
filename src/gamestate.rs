@@ -8,7 +8,7 @@ use crate::{
     draw_system::{DrawSystem, PlayerDrawSystem},
     game_object::GameObject,
     game_object_type::GameObjectType,
-    interface::Interface,
+    ui::Interface,
     life_system::PlayerLifeSystem,
     physics::PlayerPhysics,
     running_state::RunningState,
