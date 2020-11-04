@@ -65,7 +65,8 @@ impl GameState {
         screen_size: (f32, f32),
         context: &mut Context,
     ) -> GameResult<GameState> {
-        send_to_chat.send("Chat vs. Streamer game started! Use the commands on screen to drop objects that the streamer will attempt to avoid. You get 1 point for every object you drop and 10 points for every time you hit the player!".to_owned()).unwrap();
+        let game_started_message = format!("In {} seconds the Get the Streamer game will begin, you can play through chat with the commands on the right side of the game.", SPLASH_DURATION.as_secs());
+        send_to_chat.send(game_started_message).unwrap();
         let mut interface = Interface::new(context, screen_size, LIVES)?;
 
         // create timer block
@@ -180,6 +181,50 @@ impl GameState {
             *high_score += *score;
         }
     }
+
+    fn send_game_started_message(&self) {
+        let message = format!(
+            "You have {} seconds to send your commands to Get the Streamer!",
+            GAME_TIME.as_secs()
+        );
+        if let Err(error) = self.send_to_chat.send(message) {
+            eprintln!("error sending game started message to chat: {}", error);
+        }
+    }
+
+    fn send_game_ended_message(&self, winner: RunningState) {
+        let (highest_scorer, score) = self
+            .get_highest_scorer()
+            .unwrap_or_else(|| ("nobody".to_owned(), 0));
+
+        let message = match winner {
+            RunningState::ChatWon => format!(
+                "You all won, highest scorer was {} with {} points!",
+                highest_scorer, score
+            ),
+            _ => format!(
+                "The Streamer won the game despite the best efforts of {} who got {} points!",
+                highest_scorer, score
+            ),
+        };
+
+        if let Err(error) = self.send_to_chat.send(message) {
+            eprintln!("error sending game ended message to chat: {}", error);
+        }
+    }
+
+    fn end_game(&mut self, new_running_state: RunningState) {
+        self.send_game_ended_message(new_running_state);
+        self.running_state = new_running_state;
+    }
+
+    fn get_highest_scorer(&self) -> Option<(String, u128)> {
+        if let Some(scorer) = self.scores.iter().max_by(|a, b| a.1.cmp(b.1)) {
+            Some((scorer.0.to_owned(), *scorer.1))
+        } else {
+            None
+        }
+    }
 }
 impl EventHandler for GameState {
     fn update(&mut self, context: &mut Context) -> GameResult {
@@ -211,6 +256,7 @@ impl EventHandler for GameState {
                         eprintln!("Error updating game objects in interface: {}", error);
                     }
                     if self.splash.is_done() {
+                        self.send_game_started_message();
                         self.running_state = RunningState::Playing;
                         let timer = Self::create_timer(
                             self.screen_size,
@@ -231,10 +277,6 @@ impl EventHandler for GameState {
                         0
                     };
 
-                    if lives_left == 0 {
-                        self.running_state = RunningState::ChatWon;
-                    }
-
                     if let Err(error) = self.interface.update(context, lives_left) {
                         eprintln!("Error updating game objects in interface: {}", error);
                     }
@@ -242,7 +284,7 @@ impl EventHandler for GameState {
                     let game_time_left =
                         GAME_TIME.as_secs() - self.game_start_time.elapsed().as_secs();
                     if game_time_left == 0 {
-                        self.running_state = RunningState::PlayerWon;
+                        self.end_game(RunningState::PlayerWon);
                     }
 
                     let arena_size = (
@@ -284,7 +326,7 @@ impl EventHandler for GameState {
                         .find(|game_object| game_object.my_type == GameObjectType::Player)
                         .is_none()
                     {
-                        self.running_state = RunningState::ChatWon;
+                        self.end_game(RunningState::ChatWon);
                     }
                 }
                 RunningState::ChatWon | RunningState::PlayerWon => {
