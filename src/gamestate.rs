@@ -176,7 +176,6 @@ impl GameState {
             let high_score = high_scores.entry(username.to_owned()).or_insert(0);
             *high_score += *score;
         }
-        dbg!("updating scores");
     }
 }
 impl EventHandler for GameState {

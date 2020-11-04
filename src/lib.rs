@@ -89,6 +89,6 @@ pub fn run_game(run_config: Option<RunConfig>) {
     let game_state = &mut GameState::new(run_config, WINDOW_SIZE, context).unwrap();
     match event::run(context, event_loop, game_state) {
         Ok(_) => println!("Thanks for playing!"),
-        Err(error) => println!("Error occurred: {}", error),
+        Err(error) => eprintln!("Error occurred: {}", error),
     };
 }
