@@ -45,7 +45,14 @@ impl DrawSystem for GameObjectDrawSystem {
                 rotation,
                 None,
             )?;
-        
+
+        //This scaling code is to correct what seems to be a bug in ggez where text
+        //(and I'm guessing spritebatch) rendering is not affected properly by
+        //previously applied transforms.
+        //@ootsby - 2020-11-04
+        let t = graphics::transform(context);
+        let xscale= t.x.x;
+        let yscale = t.y.y;
 
         let size = self.get_size().unwrap_or((50.0, 50.0));
         if let Some(label) = &self.label {
@@ -55,9 +62,9 @@ impl DrawSystem for GameObjectDrawSystem {
             graphics::draw(
                 context,
                 label,
-                DrawParam::new().dest(Point2::new(
-                    location.x - label_width / 2.0 + size.0 / 2.0,
-                    location.y - label_height - 5.0,
+                DrawParam::default().dest(Point2::new(
+                    (location.x - label_width / 2.0 + size.0 / 2.0)*xscale,
+                    (location.y - label_height - 5.0)*yscale,
                 )),
             )?;
         }

@@ -4,14 +4,12 @@ use crate::running_state::RunningState;
 
 use eyre::Result;
 use ggez::graphics::{Color, DrawMode, DrawParam, Mesh, MeshBuilder, Rect};
-use ggez::nalgebra::Point2;
 use ggez::{graphics, timer, Context, GameResult};
 
 use super::{UIComponent, dropzonearea::DropZoneArea, sidebar::SideBar, splash::Splash, uitimer::UITimer};
 
-const DROP_ZONE_HEIGHT: f32 = 50.0;
 const TIMER_WIDTH: f32 = 5.0;
-const GAME_OVER_FONT_SIZE: f32 = 150.0;
+//const GAME_OVER_FONT_SIZE: f32 = 150.0;
 
 pub struct Interface {
     width: f32,
@@ -28,13 +26,14 @@ pub struct Interface {
 }
 
 impl Interface {
-    const SIDEBAR_PCT: f32 = 0.2;
+    const SIDEBAR_PCT: f32 = 592.0/1920.0; //Just set by the base res and image for now
 
     pub fn new(
         context: &mut Context,
         player_lives: u8,
         num_drop_zones: u8,
         splash_duration: Duration,
+        drop_zone_height: f32
     ) -> GameResult<Interface> {
         let screen_coords = ggez::graphics::screen_coordinates(context);
         let screen_width = screen_coords.w;
@@ -55,12 +54,13 @@ impl Interface {
                 context,
                 num_drop_zones,
                 drop_zone_area_width,
-                DROP_ZONE_HEIGHT,
+                drop_zone_height,
             ),
             active_timer: Some(UITimer::new(context, start_time, splash_duration, TIMER_WIDTH, screen_height, (0.0, 1.0, 0.0, 1.0))),
             sidebar: SideBar::new(context, sidebar_width, screen_height, player_lives),
             full_mask: Self::create_full_mask(context, screen_width, screen_height),
             splash,
+
         };
         Ok(ret)
     }
@@ -89,12 +89,13 @@ impl Interface {
         self.height = screen_height;
         self.sidebar_width = (screen_width * Self::SIDEBAR_PCT).floor();
         let drop_zone_area_width = screen_width - self.sidebar_width;
+        let drop_zone_height = self.drop_zone_area.height();
 
         self.drop_zone_area = DropZoneArea::new(
             context,
             self.num_drop_zones,
             drop_zone_area_width,
-            DROP_ZONE_HEIGHT,
+            drop_zone_height,
         );
 
         self.sidebar = SideBar::new(
@@ -108,20 +109,16 @@ impl Interface {
             self.splash =  Self::create_splash(context, screen_width, screen_height);
         }
 
-        //TODO - this is pretty ugly. Look into avoiding all the as_ref and unwrapping.
-        //Perhaps a default elapsed UITimer would be better than an Option
-
-        let replace_timer = match self.active_timer {
-            Some(_) => true,
-            None => false,
-        };
-
-        if replace_timer {
+        if self.active_timer.is_some() {
+            //Please the borrow checker by take ownership of the existing timer before
+            //setting the new one
+            let curr_timer = std::mem::replace(&mut self.active_timer, None).unwrap();
+            
             self.set_timer(
                 context,
-                self.active_timer.as_ref().unwrap().get_start_time(),
-                self.active_timer.as_ref().unwrap().get_duration(),
-                self.active_timer.as_ref().unwrap().get_color(),
+                curr_timer.get_start_time(),
+                curr_timer.get_duration(),
+                curr_timer.get_color(),
             )
         }
 
@@ -166,8 +163,9 @@ impl Interface {
         let screen_coords = ggez::graphics::screen_coordinates(context);
         let screen_width = screen_coords.w;
         let sidebar_left:f32 = screen_width - self.sidebar.width();
+        let drop_zone_height = self.drop_zone_area.height();
         let game_area_center_x :f32 = sidebar_left * 0.5;
-        let game_area_center_y :f32 = DROP_ZONE_HEIGHT + (screen_coords.h - DROP_ZONE_HEIGHT) * 0.5;
+        let game_area_center_y :f32 =  drop_zone_height + (screen_coords.h - drop_zone_height) * 0.5;
 
         self.drop_zone_area.draw(context, 0.0, 0.0)?;
 
@@ -187,16 +185,6 @@ impl Interface {
         }
 
         Ok(())
-    }
-
-    /// Take in an index like 3
-    /// which should return the middle x,y coordinates of the corresponding drop zone
-    pub fn get_column_coordinates_by_index(&self, index: u8) -> Point2<f32> {
-        let single_drop_zone_width = self.drop_zone_area.width() / self.num_drop_zones as f32;
-        Point2::new(
-            index as f32 * single_drop_zone_width + single_drop_zone_width / 2.0,
-            DROP_ZONE_HEIGHT / 2.0,
-        )
     }
 
     pub fn update(&mut self, context: &mut Context, player_lives: u8) -> Result<()> {

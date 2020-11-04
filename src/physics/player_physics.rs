@@ -27,13 +27,25 @@ pub struct PlayerPhysics {
 
 impl PlayerPhysics {
     pub fn new(context: &mut Context, player_hit_object: Sender<Chatter>) -> PlayerPhysics {
+        let mut heart_sound = audio::Source::new(context, "/phaserUp7.ogg").unwrap();
+        let mut jump_sound = audio::Source::new(context, "/phaseJump1.ogg").unwrap();
+        let mut hit_sound = audio::Source::new(context, "/zap2.ogg").unwrap();
+
+        //@ootsby - 2020-11-04
+        //I need to be able to hush things up. This is a temp solution until someone gets around to a
+        //central sound asset manager and volume setting.
+
+        heart_sound.set_volume(crate::GLOBAL_VOLUME);
+        jump_sound.set_volume(crate::GLOBAL_VOLUME);
+        hit_sound.set_volume(crate::GLOBAL_VOLUME);
+
         PlayerPhysics {
             velocity: Point2::new(0.0, 0.0),
             affected_by_gravity: true,
             player_hit_object,
-            heart_sound: audio::Source::new(context, "/phaserUp7.ogg").unwrap(),
-            jump_sound: audio::Source::new(context, "/phaseJump1.ogg").unwrap(),
-            hit_sound: audio::Source::new(context, "/zap2.ogg").unwrap(),
+            heart_sound,
+            jump_sound,
+            hit_sound,    
         }
     }
 

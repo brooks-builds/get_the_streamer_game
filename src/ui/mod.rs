@@ -1,8 +1,9 @@
-mod interface;
+pub mod interface;
 mod dropzonearea;
 mod sidebar;
 mod splash;
 mod uitimer;
+pub mod gamewindow;
 
 use ggez::{Context, GameResult};
 pub use interface::Interface;

@@ -8,19 +8,19 @@ use crate::{
     draw_system::{DrawSystem, PlayerDrawSystem},
     game_object::GameObject,
     game_object_type::GameObjectType,
-    ui::Interface,
+    game_world::GameWorld,
     life_system::PlayerLifeSystem,
     physics::PlayerPhysics,
     running_state::RunningState,
     sprites::Sprite,
+    ui::gamewindow::GamePlayWindow,
+    ui::Interface,
     utilities, RunConfig,
 };
 
-use ggez::audio;
-use ggez::audio::SoundSource;
 use ggez::event::EventHandler;
 use ggez::graphics::BLACK;
-use ggez::{graphics, timer, Context, GameResult};
+use ggez::{audio, audio::SoundSource, graphics, timer, Context, GameResult};
 use std::{
     collections::HashMap,
     sync::mpsc::{channel, Receiver, Sender},
@@ -35,18 +35,14 @@ pub const FRAMERATE_TARGET: u32 = 60;
 const GAME_TIME: Duration = Duration::from_secs(120);
 const SPLASH_DURATION: Duration = Duration::from_secs(15);
 const SCORES_FILE_NAME: &str = "/high_scores";
-
-struct GameArea {
-    pixel_width: f32,
-    pixel_height: f32,
-}
+const DROP_ZONE_HEIGHT: f32 = 50.0;
 
 pub struct GameState {
     send_to_chat: Sender<String>,
     receive_from_chat: Receiver<ChatMessage>,
     screen_size: (f32, f32),
     interface: Interface,
-    game_objects: Vec<GameObject>,
+    gameworld: GameWorld,
     player_hit_object_event: Receiver<Chatter>,
     running_state: RunningState,
     credits: Option<Credits>,
@@ -54,6 +50,7 @@ pub struct GameState {
     object_sound: audio::Source,
     scores: HashMap<String, u128>,
     command_parser: CommandParser,
+    gamewindow: GamePlayWindow,
 }
 
 impl GameState {
@@ -83,19 +80,66 @@ impl GameState {
             });
         }
         let _ = send_to_chat.send(String::from("Chat vs. Streamer game started! Use the commands on screen to drop objects that the streamer will attempt to avoid. You get 1 point for every object you drop and 10 points for every time you hit the player!"));
-        let interface =
-            Interface::new(context, LIVES, crate::DROP_ZONE_COUNT, SPLASH_DURATION)?;
+        let interface = Interface::new(
+            context,
+            LIVES,
+            crate::DROP_ZONE_COUNT,
+            SPLASH_DURATION,
+            DROP_ZONE_HEIGHT,
+        )?;
 
         // create player
+        let (send_player_hit_object_event, receive_player_hit_object_event) = channel();
+
+        let player: GameObject = Self::create_player(context, send_player_hit_object_event);
+        let game_start_time = Instant::now();
+
+        let mut gameworld: GameWorld = GameWorld::new(
+            screen_size.0 - interface.sidebar_width,
+            screen_size.1 - DROP_ZONE_HEIGHT,
+            DROP_ZONE_HEIGHT,
+        );
+        gameworld.add_game_object(player);
+        let gamewindow = GamePlayWindow::new(
+            screen_size.0 - interface.sidebar_width,
+            screen_size.1 - DROP_ZONE_HEIGHT,
+        );
+
+        //@ootsby - 2020-11-04
+        //I need to be able to hush things up. This is a temp solution until someone gets around to a
+        //central sound asset manager and volume setting.
+        let mut object_sound = audio::Source::new(context, "/threeTone1.ogg").unwrap();
+        object_sound.set_volume(crate::GLOBAL_VOLUME);
+
+        Ok(GameState {
+            send_to_chat,
+            receive_from_chat,
+            screen_size,
+            interface,
+            gamewindow,
+            gameworld,
+            player_hit_object_event: receive_player_hit_object_event,
+            running_state: RunningState::StartingSoon,
+            credits: None,
+            game_start_time,
+            object_sound,
+            scores: HashMap::new(),
+            command_parser: CommandParser::new(&command::COMMAND_MAPPING),
+        })
+    }
+
+    fn create_player(
+        context: &mut Context,
+        send_player_hit_object_event: Sender<Chatter>,
+    ) -> GameObject {
         let player_scale = 4.0;
         let player_forward_sprite = Sprite::new(context, "/player_forward.png", 8, 1);
         let player_left_sprite = Sprite::new(context, "/player_left.png", 8, 1);
         let player_draw_system =
             PlayerDrawSystem::new(player_left_sprite, player_forward_sprite, player_scale);
         let player_size = player_draw_system.get_size().unwrap_or((50.0, 50.0));
-        let (send_player_hit_object_event, receive_player_hit_object_event) = channel();
         let player_physics_system = PlayerPhysics::new(context, send_player_hit_object_event);
-        let player = GameObject::new(
+        GameObject::new(
             250.0,
             250.0,
             Some(Box::new(player_draw_system)),
@@ -106,26 +150,7 @@ impl GameState {
             None,
             GameObjectType::Player,
             Some(Box::new(PlayerLifeSystem::new())),
-        );
-
-        let game_objects = vec![player];
-
-        let game_start_time = Instant::now();
-
-        Ok(GameState {
-            send_to_chat,
-            receive_from_chat,
-            screen_size,
-            interface,
-            game_objects,
-            player_hit_object_event: receive_player_hit_object_event,
-            running_state: RunningState::StartingSoon,
-            credits: None,
-            game_start_time,
-            object_sound: audio::Source::new(context, "/threeTone1.ogg").unwrap(),
-            scores: HashMap::new(),
-            command_parser: CommandParser::new(&command::COMMAND_MAPPING),
-        })
+        )
     }
 
     fn handle_command(
@@ -136,20 +161,14 @@ impl GameState {
         if let Some(command) = command {
             let chatter = command.chatter.clone();
             self.object_sound.play().unwrap();
-            self.game_objects.push(command.handle(
-                self.interface.get_column_coordinates_by_index(command.id),
+            self.gameworld.add_game_object(command.handle(
+                self.gameworld.get_column_coordinates_by_index(command.id),
                 context,
             )?);
             let score = self.scores.entry(chatter.name).or_insert(0);
             *score += 1;
         }
         Ok(())
-    }
-
-    fn get_player(&self) -> Option<&GameObject> {
-        self.game_objects
-            .iter()
-            .find(|game_object| game_object.my_type == GameObjectType::Player)
     }
 
     fn update_scores(&self, high_scores: &mut HashMap<String, u128>) {
@@ -202,7 +221,7 @@ impl EventHandler for GameState {
                 }
                 RunningState::Playing => {
                     // get the player lives left
-                    let lives_left = if let Some(player) = self.get_player() {
+                    let lives_left = if let Some(player) = self.gameworld.get_player() {
                         player.get_lives_left().unwrap_or(3)
                     } else {
                         0
@@ -222,31 +241,7 @@ impl EventHandler for GameState {
                         self.running_state = RunningState::PlayerWon;
                     }
 
-                    let arena_size = (
-                        self.screen_size.0 - self.interface.sidebar_width,
-                        self.screen_size.1,
-                    );
-
-                    let collidable_game_objects: Vec<GameObject> = self
-                        .game_objects
-                        .clone()
-                        .into_iter()
-                        .filter(|game_object| game_object.collidable)
-                        .collect();
-
-                    self.game_objects.iter_mut().for_each(|game_object| {
-                        if let Err(error) = game_object.update(
-                            timer::time_since_start(context),
-                            arena_size,
-                            context,
-                            &collidable_game_objects,
-                        ) {
-                            eprintln!("error running update: {}", error)
-                        }
-                    });
-
-                    self.game_objects
-                        .retain(|game_object| game_object.is_alive());
+                    let _ = self.gameworld.update(context);
 
                     if let Ok(chatter) = self.player_hit_object_event.try_recv() {
                         let message_to_chat = format!("Hit! {} gets 10 points", &chatter.name);
@@ -255,12 +250,7 @@ impl EventHandler for GameState {
                         *score += 10;
                     }
 
-                    if self
-                        .game_objects
-                        .iter()
-                        .find(|game_object| game_object.my_type == GameObjectType::Player)
-                        .is_none()
-                    {
+                    if self.gameworld.get_player().is_none() {
                         self.running_state = RunningState::ChatWon;
                     }
                 }
@@ -299,9 +289,9 @@ impl EventHandler for GameState {
         match self.running_state {
             RunningState::StartingSoon => (),
             RunningState::Playing => {
-                for game_object in self.game_objects.iter() {
-                    game_object.draw(context)?;
-                }
+                let _ =
+                    self.gamewindow
+                        .draw_gameworld(context, 0.0, DROP_ZONE_HEIGHT, &self.gameworld);
             }
             RunningState::PlayerWon | RunningState::ChatWon => {
                 if let Some(credits) = &self.credits {
@@ -326,5 +316,10 @@ impl EventHandler for GameState {
             },
         );
         self.interface.update_screen_size(ctx, width, height);
+        self.gamewindow.update_screen_size(
+            ctx,
+            width - self.interface.sidebar_width,
+            height - DROP_ZONE_HEIGHT,
+        );
     }
 }
