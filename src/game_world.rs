@@ -32,7 +32,7 @@ impl GameWorld {
     //@ootsby - 2020-11-04
     //TODO - Have a think about how to best expose the game objects to other systems
     //for inspection or modification. This just returns a ref to the owned vector for now
-    //but that seems potentially unwise. Clone won't work because GameObject currently 
+    //but that seems potentially unwise. Clone won't work because GameObject currently
     //doesn't implement Clone fully.
     pub fn get_game_objects(&self) -> &Vec<GameObject> {
         &self.game_objects

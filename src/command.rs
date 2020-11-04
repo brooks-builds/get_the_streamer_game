@@ -24,7 +24,9 @@ pub struct CommandParser {
 }
 
 impl CommandParser {
-    pub fn new(command_mapping: &[(&'static str, &'static dyn GameCommandHandler)]) -> CommandParser {
+    pub fn new(
+        command_mapping: &[(&'static str, &'static dyn GameCommandHandler)],
+    ) -> CommandParser {
         return CommandParser {
             command_map: command_mapping.iter().cloned().collect(),
         };
@@ -48,7 +50,10 @@ impl CommandParser {
         }
     }
 
-    pub fn get_commandtype(&self, command_string: &str) -> Option<&&'static dyn GameCommandHandler> {
+    pub fn get_commandtype(
+        &self,
+        command_string: &str,
+    ) -> Option<&&'static dyn GameCommandHandler> {
         self.command_map.get(command_string)
     }
 

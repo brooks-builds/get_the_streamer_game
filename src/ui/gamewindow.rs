@@ -38,7 +38,8 @@ impl GamePlayWindow {
         let _ = graphics::apply_transformations(context);
 
         //render all the objects
-        for game_object in gameworld.get_game_objects().iter(){ //get_game_objects() {
+        for game_object in gameworld.get_game_objects().iter() {
+            //get_game_objects() {
             game_object.draw(context)?;
         }
 

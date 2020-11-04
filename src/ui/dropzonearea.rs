@@ -93,7 +93,7 @@ impl UIComponent for DropZoneArea {
                 graphics::draw(
                     context,
                     &self.drop_zone_background,
-                    DrawParam::new().dest(Point2::new(drop_zone.x+x, drop_zone.y+y)),
+                    DrawParam::new().dest(Point2::new(drop_zone.x + x, drop_zone.y + y)),
                 )?;
                 Ok(())
             })?;

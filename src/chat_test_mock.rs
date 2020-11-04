@@ -9,7 +9,7 @@ use twitch_chat_wrapper::twitchchat::FromIrcMessage;
 pub fn run(
     send_incoming_chat_message: Sender<ChatMessage>,
     num_bot_users: u32,
-    command_occurences: &'static[(&'static str, u32)],
+    command_occurences: &'static [(&'static str, u32)],
     initial_commands_delay: Duration,
     min_command_interval_ms: u64,
     max_command_interval_ms: u64,
@@ -43,11 +43,10 @@ pub fn run(
             let (_pos, msg_a) = twitch_chat_wrapper::twitchchat::irc::parse_one(&input).unwrap();
 
             let test_msg: Privmsg = Privmsg::from_irc(msg_a).unwrap();
-            match send_incoming_chat_message
-                .send(ChatMessage::new(test_msg)){
-                    Ok(_) => (),
-                    Err(error) => println!("Error while sending bot chat command: {}", error),
-                }
+            match send_incoming_chat_message.send(ChatMessage::new(test_msg)) {
+                Ok(_) => (),
+                Err(error) => println!("Error while sending bot chat command: {}", error),
+            }
 
             thread::sleep(Duration::from_millis(
                 rng.gen_range(min_command_interval_ms, max_command_interval_ms),

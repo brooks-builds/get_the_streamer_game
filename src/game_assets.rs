@@ -1,5 +1,5 @@
-use ggez::Context;
 use ggez::graphics::Image;
+use ggez::Context;
 use std::collections::HashMap;
 
 pub struct GameAssets {

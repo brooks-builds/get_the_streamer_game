@@ -6,7 +6,9 @@ use eyre::Result;
 use ggez::graphics::{Color, DrawMode, DrawParam, Mesh, MeshBuilder, Rect};
 use ggez::{graphics, timer, Context, GameResult};
 
-use super::{UIComponent, dropzonearea::DropZoneArea, sidebar::SideBar, splash::Splash, uitimer::UITimer};
+use super::{
+    dropzonearea::DropZoneArea, sidebar::SideBar, splash::Splash, uitimer::UITimer, UIComponent,
+};
 
 const TIMER_WIDTH: f32 = 5.0;
 //const GAME_OVER_FONT_SIZE: f32 = 150.0;
@@ -16,8 +18,8 @@ pub struct Interface {
     height: f32,
     pub sidebar_width: f32, //TODO - get rid of this public
     num_drop_zones: u8,
-    start_time:Instant,
-    splash_duration:Duration,
+    start_time: Instant,
+    splash_duration: Duration,
     active_timer: Option<UITimer>,
     drop_zone_area: DropZoneArea,
     sidebar: SideBar,
@@ -26,14 +28,14 @@ pub struct Interface {
 }
 
 impl Interface {
-    const SIDEBAR_PCT: f32 = 592.0/1920.0; //Just set by the base res and image for now
+    const SIDEBAR_PCT: f32 = 592.0 / 1920.0; //Just set by the base res and image for now
 
     pub fn new(
         context: &mut Context,
         player_lives: u8,
         num_drop_zones: u8,
         splash_duration: Duration,
-        drop_zone_height: f32
+        drop_zone_height: f32,
     ) -> GameResult<Interface> {
         let screen_coords = ggez::graphics::screen_coordinates(context);
         let screen_width = screen_coords.w;
@@ -56,11 +58,17 @@ impl Interface {
                 drop_zone_area_width,
                 drop_zone_height,
             ),
-            active_timer: Some(UITimer::new(context, start_time, splash_duration, TIMER_WIDTH, screen_height, (0.0, 1.0, 0.0, 1.0))),
+            active_timer: Some(UITimer::new(
+                context,
+                start_time,
+                splash_duration,
+                TIMER_WIDTH,
+                screen_height,
+                (0.0, 1.0, 0.0, 1.0),
+            )),
             sidebar: SideBar::new(context, sidebar_width, screen_height, player_lives),
             full_mask: Self::create_full_mask(context, screen_width, screen_height),
             splash,
-
         };
         Ok(ret)
     }
@@ -76,7 +84,14 @@ impl Interface {
         duration: Duration,
         color: (f32, f32, f32, f32),
     ) {
-        self.active_timer = Some(UITimer::new(context, start_time, duration, TIMER_WIDTH, self.height, color));
+        self.active_timer = Some(UITimer::new(
+            context,
+            start_time,
+            duration,
+            TIMER_WIDTH,
+            self.height,
+            color,
+        ));
     }
 
     pub fn update_screen_size(
@@ -105,15 +120,15 @@ impl Interface {
             self.sidebar.get_player_lives(),
         );
 
-        if !self.splash_is_done(){
-            self.splash =  Self::create_splash(context, screen_width, screen_height);
+        if !self.splash_is_done() {
+            self.splash = Self::create_splash(context, screen_width, screen_height);
         }
 
         if self.active_timer.is_some() {
             //Please the borrow checker by take ownership of the existing timer before
             //setting the new one
             let curr_timer = std::mem::replace(&mut self.active_timer, None).unwrap();
-            
+
             self.set_timer(
                 context,
                 curr_timer.get_start_time(),
@@ -144,8 +159,8 @@ impl Interface {
         // game_over_title.set_font(Font::default(), Scale::uniform(50.0));
     }
 
-    fn create_splash(context: &mut Context, screen_width: f32, screen_height: f32)-> Splash{
-        Splash::new(context, screen_width*0.6, screen_height*0.2)
+    fn create_splash(context: &mut Context, screen_width: f32, screen_height: f32) -> Splash {
+        Splash::new(context, screen_width * 0.6, screen_height * 0.2)
     }
 
     fn create_full_mask(context: &mut Context, screen_width: f32, screen_height: f32) -> Mesh {
@@ -162,22 +177,23 @@ impl Interface {
     pub fn draw(&mut self, context: &mut Context, running_state: &RunningState) -> GameResult<()> {
         let screen_coords = ggez::graphics::screen_coordinates(context);
         let screen_width = screen_coords.w;
-        let sidebar_left:f32 = screen_width - self.sidebar.width();
+        let sidebar_left: f32 = screen_width - self.sidebar.width();
         let drop_zone_height = self.drop_zone_area.height();
-        let game_area_center_x :f32 = sidebar_left * 0.5;
-        let game_area_center_y :f32 =  drop_zone_height + (screen_coords.h - drop_zone_height) * 0.5;
+        let game_area_center_x: f32 = sidebar_left * 0.5;
+        let game_area_center_y: f32 = drop_zone_height + (screen_coords.h - drop_zone_height) * 0.5;
 
         self.drop_zone_area.draw(context, 0.0, 0.0)?;
 
-        self.sidebar
-            .draw(context, sidebar_left, 0.0)?;
+        self.sidebar.draw(context, sidebar_left, 0.0)?;
 
         let _ = match &self.active_timer {
             Some(timer) => timer.draw(context, sidebar_left, 0.0),
             None => Ok(()),
         };
         if *running_state == RunningState::StartingSoon {
-            let _ = self.splash.draw(context, game_area_center_x, game_area_center_y);
+            let _ = self
+                .splash
+                .draw(context, game_area_center_x, game_area_center_y);
         }
 
         if running_state.is_game_over() {

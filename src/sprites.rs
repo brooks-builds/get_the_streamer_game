@@ -1,20 +1,20 @@
+use crate::get_image_from_assets;
 use ggez::graphics::{DrawParam, Image, Rect};
 use ggez::nalgebra::Point2;
 use ggez::{graphics, Context, GameResult};
 use graphics::Color;
 use std::time::Duration;
-use crate::get_image_from_assets;
 
 #[derive(Clone)]
-pub struct SpriteImageDef{
+pub struct SpriteImageDef {
     pub image_path: &'static str,
     pub frames_x: u16,
-    pub frames_y:u16,
+    pub frames_y: u16,
 }
 
-impl SpriteImageDef{
-    pub const fn new( path:&'static str, frames_x: u16, frames_y:u16) -> SpriteImageDef{
-        Self{
+impl SpriteImageDef {
+    pub const fn new(path: &'static str, frames_x: u16, frames_y: u16) -> SpriteImageDef {
+        Self {
             image_path: path,
             frames_x: frames_x,
             frames_y: frames_y,

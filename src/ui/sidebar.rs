@@ -1,4 +1,9 @@
-use ggez::{Context, GameResult, graphics, graphics::{DrawParam, Image}, nalgebra::Point2};
+use ggez::{
+    graphics,
+    graphics::{DrawParam, Image},
+    nalgebra::Point2,
+    Context, GameResult,
+};
 
 use super::UIComponent;
 
@@ -34,7 +39,6 @@ impl SideBar {
     pub fn get_player_lives(&self) -> u8 {
         return self.player_lives;
     }
-
 }
 
 impl UIComponent for SideBar {
@@ -46,32 +50,31 @@ impl UIComponent for SideBar {
         return self.height;
     }
 
-    
     fn draw(&self, context: &mut Context, x: f32, y: f32) -> GameResult {
-      let w_scale: f32 = self.width / self.image.width() as f32;
-      let h_scale: f32 = self.height / self.image.height() as f32;
+        let w_scale: f32 = self.width / self.image.width() as f32;
+        let h_scale: f32 = self.height / self.image.height() as f32;
 
-      let _ = graphics::draw(
-          context,
-          &self.image,
-          DrawParam::default()
-              .dest(Point2::new(x, y))
-              .scale([w_scale, h_scale]),
-      );
+        let _ = graphics::draw(
+            context,
+            &self.image,
+            DrawParam::default()
+                .dest(Point2::new(x, y))
+                .scale([w_scale, h_scale]),
+        );
 
-      let mut heart_x = x + (self.width * 0.5)
-          - (self.heart_image.width() as f32 * self.player_lives as f32) * 0.5;
+        let mut heart_x = x + (self.width * 0.5)
+            - (self.heart_image.width() as f32 * self.player_lives as f32) * 0.5;
 
-      for _ in 0..self.player_lives {
-          let _ = graphics::draw(
-              context,
-              &self.heart_image,
-              DrawParam::new().dest(Point2::new(heart_x, self.height * 0.95)),
-          );
+        for _ in 0..self.player_lives {
+            let _ = graphics::draw(
+                context,
+                &self.heart_image,
+                DrawParam::new().dest(Point2::new(heart_x, self.height * 0.95)),
+            );
 
-          heart_x += self.heart_image.width() as f32 + 5.0;
-      }      
+            heart_x += self.heart_image.width() as f32 + 5.0;
+        }
 
-      Ok(())
-  }
+        Ok(())
+    }
 }

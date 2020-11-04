@@ -85,7 +85,7 @@ impl UIComponent for UITimer {
     fn height(&self) -> f32 {
         return self.height;
     }
-    
+
     fn draw(&self, context: &mut Context, x: f32, y: f32) -> GameResult {
         let elapsed_fraction = self.get_remaining().as_secs_f32() / self.duration.as_secs_f32();
         graphics::draw(

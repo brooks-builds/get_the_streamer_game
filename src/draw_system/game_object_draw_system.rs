@@ -39,19 +39,19 @@ impl DrawSystem for GameObjectDrawSystem {
 
     fn draw(&self, context: &mut Context, location: Point2<f32>, rotation: &f32) -> GameResult<()> {
         self.sprite.draw(
-                context,
-                location,
-                [self.scale_by, self.scale_by],
-                rotation,
-                None,
-            )?;
+            context,
+            location,
+            [self.scale_by, self.scale_by],
+            rotation,
+            None,
+        )?;
 
         //This scaling code is to correct what seems to be a bug in ggez where text
         //(and I'm guessing spritebatch) rendering is not affected properly by
         //previously applied transforms.
         //@ootsby - 2020-11-04
         let t = graphics::transform(context);
-        let xscale= t.x.x;
+        let xscale = t.x.x;
         let yscale = t.y.y;
 
         let size = self.get_size().unwrap_or((50.0, 50.0));
@@ -63,16 +63,19 @@ impl DrawSystem for GameObjectDrawSystem {
                 context,
                 label,
                 DrawParam::default().dest(Point2::new(
-                    (location.x - label_width / 2.0 + size.0 / 2.0)*xscale,
-                    (location.y - label_height - 5.0)*yscale,
+                    (location.x - label_width / 2.0 + size.0 / 2.0) * xscale,
+                    (location.y - label_height - 5.0) * yscale,
                 )),
             )?;
         }
-        
+
         Ok(())
     }
 
     fn get_size(&self) -> Option<(f32, f32)> {
-        Some((self.sprite.width * self.scale_by, self.sprite.height * self.scale_by))
+        Some((
+            self.sprite.width * self.scale_by,
+            self.sprite.height * self.scale_by,
+        ))
     }
 }

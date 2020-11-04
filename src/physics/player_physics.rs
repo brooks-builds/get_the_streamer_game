@@ -45,7 +45,7 @@ impl PlayerPhysics {
             player_hit_object,
             heart_sound,
             jump_sound,
-            hit_sound,    
+            hit_sound,
         }
     }
 
