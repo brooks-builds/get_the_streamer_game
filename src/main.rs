@@ -28,6 +28,6 @@ fn main() {
         &mut GameState::new(send_to_twitch, receive_from_twitch, WINDOW_SIZE, context).unwrap();
     match event::run(context, event_loop, game_state) {
         Ok(_) => println!("Thanks for playing!"),
-        Err(error) => println!("Error occurred: {}", error),
+        Err(error) => eprintln!("Error occurred: {}", error),
     };
 }
