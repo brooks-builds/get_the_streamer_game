@@ -16,8 +16,8 @@ impl SpriteImageDef {
     pub const fn new(path: &'static str, frames_x: u16, frames_y: u16) -> SpriteImageDef {
         Self {
             image_path: path,
-            frames_x: frames_x,
-            frames_y: frames_y,
+            frames_x,
+            frames_y,
         }
     }
 }

@@ -11,7 +11,7 @@ use std::collections::HashMap;
 
 use super::Chatter;
 
-pub const COMMAND_MAPPING: [(&'static str, &'static dyn GameCommandHandler); 5] = [
+pub const COMMAND_MAPPING: [(&str, &dyn GameCommandHandler); 5] = [
     ("#fire", GameCommandHandlers::FIRE),
     ("#snake", GameCommandHandlers::SNAKE),
     ("#snek", GameCommandHandlers::SNAKE),
@@ -27,9 +27,9 @@ impl CommandParser {
     pub fn new(
         command_mapping: &[(&'static str, &'static dyn GameCommandHandler)],
     ) -> CommandParser {
-        return CommandParser {
+        CommandParser {
             command_map: command_mapping.iter().cloned().collect(),
-        };
+        }
     }
 
     fn get_id_from_message(message_part: Option<&str>) -> Result<u8, &'static str> {
@@ -71,7 +71,7 @@ impl CommandParser {
             let id = Self::get_id_from_message(parts.next())?;
             match self.get_commandtype(command) {
                 Some(command_type) => Ok(Some(CommandInstance {
-                    command_type: (*command_type).clone(),
+                    command_type: *command_type,
                     chatter,
                     id,
                 })),
@@ -95,9 +95,8 @@ impl CommandInstance {
         drop_zone_location: Point2<f32>,
         context: &mut Context,
     ) -> GameResult<GameObject> {
-        return self
-            .command_type
-            .handle_command(self.chatter.clone(), drop_zone_location, context);
+        self.command_type
+            .handle_command(self.chatter.clone(), drop_zone_location, context)
     }
 }
 
@@ -151,7 +150,7 @@ impl GameCommandHandler for SpawnEntityCommandHandler {
             size.1,
             physics_system,
             true,
-            Some(chatter.clone()),
+            Some(chatter),
             self.game_object_type.clone(),
             (self.life_system)(),
         );

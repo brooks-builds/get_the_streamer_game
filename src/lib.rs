@@ -46,7 +46,7 @@ lazy_static! {
 }
 
 pub fn get_image_from_assets(context: &mut Context, path: String) -> Image {
-    return GAME_ASSETS.lock().unwrap().get_image(context, path);
+    GAME_ASSETS.lock().unwrap().get_image(context, path)
 }
 
 const WINDOW_SIZE: (f32, f32) = (1920.0, 1080.0);

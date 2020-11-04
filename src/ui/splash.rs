@@ -32,11 +32,11 @@ impl Splash {
 
 impl UIComponent for Splash {
     fn width(&self) -> f32 {
-        return self.width;
+        self.width
     }
 
     fn height(&self) -> f32 {
-        return self.height;
+        self.height
     }
     fn draw(&self, context: &mut Context, x: f32, y: f32) -> GameResult {
         graphics::draw(

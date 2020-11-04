@@ -61,10 +61,10 @@ impl GamePlayWindow {
 //@ootsby - 2020-11-04
 impl UIComponent for GamePlayWindow {
     fn width(&self) -> f32 {
-        return self.width;
+        self.width
     }
     fn height(&self) -> f32 {
-        return self.height;
+        self.height
     }
     fn draw(&self, _context: &mut Context, _x: f32, _y: f32) -> GameResult {
         Err(GameError::RenderError(String::from(

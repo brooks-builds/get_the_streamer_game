@@ -17,8 +17,8 @@ impl GameAssets {
         let Self { img_cache } = self;
         let img_entry = img_cache.entry(path.clone());
         //Image::new(get_game_context().unwrap(), path)
-        return img_entry
+        img_entry
             .or_insert_with(|| Image::new(context, path.clone()).unwrap())
-            .clone();
+            .clone()
     }
 }

@@ -37,17 +37,17 @@ impl SideBar {
     }
 
     pub fn get_player_lives(&self) -> u8 {
-        return self.player_lives;
+        self.player_lives
     }
 }
 
 impl UIComponent for SideBar {
     fn width(&self) -> f32 {
-        return self.width;
+        self.width
     }
 
     fn height(&self) -> f32 {
-        return self.height;
+        self.height
     }
 
     fn draw(&self, context: &mut Context, x: f32, y: f32) -> GameResult {

@@ -85,10 +85,10 @@ impl GameWorld {
     }
 
     pub fn width(&self) -> f32 {
-        return self.width;
+        self.width
     }
 
     pub fn height(&self) -> f32 {
-        return self.height;
+        self.height
     }
 }

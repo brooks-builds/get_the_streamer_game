@@ -42,7 +42,7 @@ impl UITimer {
         self.duration
             .clone()
             .checked_sub(self.start_time.elapsed())
-            .unwrap_or(Duration::new(0, 0))
+            .unwrap_or_else(|| Duration::new(0, 0))
     }
 
     fn create_mesh(
@@ -65,25 +65,25 @@ impl UITimer {
     pub fn update(&self, _time_since_start: std::time::Duration, _context: &mut Context) {}
 
     pub fn get_start_time(&self) -> Instant {
-        return self.start_time;
+        self.start_time
     }
 
     pub fn get_duration(&self) -> Duration {
-        return self.duration;
+        self.duration
     }
 
     pub fn get_color(&self) -> (f32, f32, f32, f32) {
-        return self.color;
+        self.color
     }
 }
 
 impl UIComponent for UITimer {
     fn width(&self) -> f32 {
-        return self.width;
+        self.width
     }
 
     fn height(&self) -> f32 {
-        return self.height;
+        self.height
     }
 
     fn draw(&self, context: &mut Context, x: f32, y: f32) -> GameResult {

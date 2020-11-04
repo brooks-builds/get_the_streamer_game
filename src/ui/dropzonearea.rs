@@ -19,7 +19,7 @@ impl DropZoneArea {
     pub fn new(context: &mut Context, num_zones: u8, width: f32, height: f32) -> DropZoneArea {
         let single_drop_zone_width = width / num_zones as f32;
         let drop_zones = Self::create_drop_zones(num_zones, single_drop_zone_width, height);
-        let first_zone_bound: Rect = drop_zones[0].clone();
+        let first_zone_bound: Rect = drop_zones[0];
 
         DropZoneArea {
             width,
@@ -74,17 +74,17 @@ impl DropZoneArea {
             drop_zones.push(drop_zone);
         }
 
-        return drop_zones;
+        drop_zones
     }
 }
 
 impl UIComponent for DropZoneArea {
     fn width(&self) -> f32 {
-        return self.width;
+        self.width
     }
 
     fn height(&self) -> f32 {
-        return self.height;
+        self.height
     }
     fn draw(&self, context: &mut Context, x: f32, y: f32) -> GameResult {
         self.drop_zones
