@@ -66,7 +66,7 @@ impl Default for RunConfig {
             test_command_occurences: &[],
             attach_to_twitch_channel: true
             // test_bot_chatters: 5,
-            // test_command_occurences: &[("fire", 1), ("sword", 1), ("snake", 1), ("heart", 1)],
+            // test_command_occurences: &[("fire", 1), ("sword", 1), ("snake", 1), ("heart", 1), ("rng", 1), ("rand", 1), ("random", 1)],
             // attach_to_twitch_channel: false,
         }
     }
