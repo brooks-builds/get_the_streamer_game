@@ -1,5 +1,5 @@
 use ggez::{nalgebra::Point2, Context, GameResult};
-use rand::prelude::*;
+use rand::{distributions::Standard, prelude::Distribution, Rng};
 
 use crate::{
     draw_system::DrawSystem, draw_system::GameObjectDrawSystem, game_object::GameObject,
@@ -44,6 +44,11 @@ impl Command {
                 })),
                 "#heart" => Ok(Some(Command {
                     command_type: CommandType::Heart,
+                    id,
+                    chatter,
+                })),
+                "#random" | "#rand" | "#rng" => Ok(Some(Command {
+                    command_type: CommandType::random(),
                     id,
                     chatter,
                 })),
@@ -153,4 +158,22 @@ pub enum CommandType {
     Sword,
     Snake,
     Heart,
+}
+
+impl CommandType {
+    pub fn random() -> Self {
+        rand::random()
+    }
+}
+
+impl Distribution<CommandType> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> CommandType {
+        match rng.gen_range(0, 4) {
+            0 => CommandType::Fire,
+            1 => CommandType::Sword,
+            2 => CommandType::Snake,
+            3 => CommandType::Heart,
+            _ => unreachable!(),
+        }
+    }
 }
