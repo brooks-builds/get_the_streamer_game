@@ -11,12 +11,15 @@ use std::collections::HashMap;
 
 use super::Chatter;
 
-pub const COMMAND_MAPPING: [(&str, &dyn GameCommandHandler); 5] = [
+pub const COMMAND_MAPPING: [(&str, &dyn GameCommandHandler); 8] = [
     ("#fire", GameCommandHandlers::FIRE),
     ("#snake", GameCommandHandlers::SNAKE),
     ("#snek", GameCommandHandlers::SNAKE),
     ("#sword", GameCommandHandlers::SWORD),
     ("#heart", GameCommandHandlers::HEART),
+    ("#random", GameCommandHandlers::RANDOM),
+    ("#rand", GameCommandHandlers::RANDOM),
+    ("#rng", GameCommandHandlers::RANDOM),
 ];
 
 pub struct CommandParser {
@@ -115,6 +118,34 @@ pub trait GameCommandHandler {
 }
 
 #[derive(Clone)]
+pub struct RandomCommandHandler {}
+
+impl GameCommandHandler for RandomCommandHandler {
+    fn handle_command(
+        &self,
+        chatter: Chatter,
+        drop_zone_location: Point2<f32>,
+        context: &mut Context,
+    ) -> GameResult<GameObject> {
+        let rng = &mut thread_rng();
+        let chosen = [
+            GameCommandHandlers::FIRE,
+            GameCommandHandlers::HEART,
+            GameCommandHandlers::SNAKE,
+            GameCommandHandlers::SWORD,
+        ]
+        .choose(rng)
+        .unwrap();
+        let gc = CommandInstance {
+            command_type: *chosen,
+            id: rng.gen_range(0, crate::DROP_ZONE_COUNT),
+            chatter,
+        };
+        gc.handle(drop_zone_location, context)
+    }
+}
+
+#[derive(Clone)]
 pub struct SpawnEntityCommandHandler {
     pub game_object_type: GameObjectType,
     pub scale: f32,
@@ -197,4 +228,5 @@ impl GameCommandHandlers {
         physics_system: || Some(Box::new(HeartPhysics::new())),
         life_system: || Some(Box::new(HeartLifeSystem::new())),
     };
+    const RANDOM: &'static dyn GameCommandHandler = &RandomCommandHandler {};
 }
