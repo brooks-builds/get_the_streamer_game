@@ -49,7 +49,7 @@ impl GamePlayWindow {
         Ok(())
     }
 
-    pub fn update_screen_size(&mut self, _context: &mut Context, width: f32, height: f32) {
+    pub fn update_dimensions(&mut self, _context: &mut Context, width: f32, height: f32) {
         self.width = width;
         self.height = height;
     }

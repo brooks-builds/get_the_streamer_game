@@ -358,8 +358,10 @@ impl EventHandler for GameState {
                 h: height,
             },
         );
+
         self.interface.update_screen_size(ctx, width, height);
-        self.gamewindow.update_screen_size(
+
+        self.gamewindow.update_dimensions(
             ctx,
             width - self.interface.sidebar_width,
             height - DROP_ZONE_HEIGHT,
