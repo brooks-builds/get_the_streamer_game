@@ -1,16 +1,18 @@
 use crate::{
     draw_system::DrawSystem, draw_system::GameObjectDrawSystem, game_object::GameObject,
-    game_object_type::GameObjectType, life_system::FireLifeSystem, life_system::HeartLifeSystem,
-    life_system::LifeSystem, life_system::SnakeLifeSystem, life_system::SwordLifeSystem,
-    physics::FirePhysics, physics::HeartPhysics, physics::PhysicsSystem, physics::SnakePhysics,
-    physics::SwordPhysics, sprites::Sprite, sprites::SpriteImageDef,
+    game_object_type::GameObjectType, game_world::GameWorld, life_system::FireLifeSystem,
+    life_system::HeartLifeSystem, life_system::LifeSystem, life_system::SnakeLifeSystem,
+    life_system::SwordLifeSystem, physics::FirePhysics, physics::HeartPhysics,
+    physics::PhysicsSystem, physics::SnakePhysics, physics::SwordPhysics, sprites::Sprite,
+    sprites::SpriteImageDef,
 };
-use ggez::{nalgebra::Point2, Context, GameError, GameResult};
+use ggez::{Context, GameError, GameResult};
 use rand::prelude::*;
 use std::collections::HashMap;
 
 use super::Chatter;
 
+//A mapping between chat command strings and handlers
 pub const COMMAND_MAPPING: [(&str, &dyn GameCommandHandler); 8] = [
     ("#fire", GameCommandHandlers::FIRE),
     ("#snake", GameCommandHandlers::SNAKE),
@@ -22,6 +24,9 @@ pub const COMMAND_MAPPING: [(&str, &dyn GameCommandHandler); 8] = [
     ("#rng", GameCommandHandlers::RANDOM),
 ];
 
+//A Command Parser takes chat messages, parses them to find commands and
+//then constructs command instances to handle them according to a given
+//mapping.
 pub struct CommandParser {
     command_map: HashMap<&'static str, &'static dyn GameCommandHandler>,
 }
@@ -74,7 +79,7 @@ impl CommandParser {
             let id = Self::get_id_from_message(parts.next())?;
             match self.get_commandtype(command) {
                 Some(command_type) => Ok(Some(CommandInstance {
-                    command_type: *command_type,
+                    command_handler: *command_type,
                     chatter,
                     id,
                 })),
@@ -86,20 +91,18 @@ impl CommandParser {
     }
 }
 
+//A command instance is a single occurence of a command with associated
+//chatter, parameters, timestamp or other information.
 pub struct CommandInstance {
-    pub command_type: &'static dyn GameCommandHandler,
+    pub command_handler: &'static dyn GameCommandHandler,
     pub id: u8,
     pub chatter: Chatter,
 }
 
 impl CommandInstance {
-    pub fn handle(
-        &self,
-        drop_zone_location: Point2<f32>,
-        context: &mut Context,
-    ) -> GameResult<GameObject> {
-        self.command_type
-            .handle_command(self.chatter.clone(), drop_zone_location, context)
+    pub fn handle(&self, context: &mut Context, gameworld: &mut GameWorld) -> GameResult {
+        self.command_handler
+            .handle_command(context, gameworld, &self)
     }
 }
 
@@ -107,44 +110,46 @@ pub trait GameCommandHandler {
     #[allow(unused_variables)]
     fn handle_command(
         &self,
-        chatter: Chatter,
-        drop_zone_location: Point2<f32>,
         context: &mut Context,
-    ) -> GameResult<GameObject> {
+        gameworld: &mut GameWorld,
+        command_instance: &CommandInstance,
+    ) -> GameResult {
         Err(GameError::ConfigError(String::from(
             "Unimplemented Command Handler.",
         )))
     }
 }
 
+//RandomCommandHandler fires a random event from the given set of commands.
+//(The set is manually defined to avoid inadvertantly including undesirable
+//future commands)
 #[derive(Clone)]
-pub struct RandomCommandHandler {}
+pub struct RandomCommandHandler {
+    choices: &'static [&'static dyn GameCommandHandler],
+}
 
 impl GameCommandHandler for RandomCommandHandler {
     fn handle_command(
         &self,
-        chatter: Chatter,
-        drop_zone_location: Point2<f32>,
         context: &mut Context,
-    ) -> GameResult<GameObject> {
+        gameworld: &mut GameWorld,
+        command_instance: &CommandInstance,
+    ) -> GameResult {
+        let chatter = command_instance.chatter.clone();
         let rng = &mut thread_rng();
-        let chosen = [
-            GameCommandHandlers::FIRE,
-            GameCommandHandlers::HEART,
-            GameCommandHandlers::SNAKE,
-            GameCommandHandlers::SWORD,
-        ]
-        .choose(rng)
-        .unwrap();
+        let chosen = self.choices.choose(rng).unwrap();
         let gc = CommandInstance {
-            command_type: *chosen,
+            command_handler: *chosen,
             id: rng.gen_range(0, crate::DROP_ZONE_COUNT),
             chatter,
         };
-        gc.handle(drop_zone_location, context)
+        gc.handle(context, gameworld)
     }
 }
 
+//SpawnEntityCommandHandler is the basis for game object spawning commands.
+//Note that most of the associated data is about defining the entity. This
+//should probably be moved elsewhere leaving just a type identifier/ref in here.
 #[derive(Clone)]
 pub struct SpawnEntityCommandHandler {
     pub game_object_type: GameObjectType,
@@ -157,13 +162,14 @@ pub struct SpawnEntityCommandHandler {
 impl GameCommandHandler for SpawnEntityCommandHandler {
     fn handle_command(
         &self,
-        chatter: Chatter,
-        drop_zone_location: Point2<f32>,
         context: &mut Context,
-    ) -> GameResult<GameObject> {
+        gameworld: &mut GameWorld,
+        command_instance: &CommandInstance,
+    ) -> GameResult {
         let scale = self.scale;
         let def = &self.sprite_def;
         let sprite: Sprite = Sprite::new(context, def.image_path, def.frames_x, def.frames_y);
+        let chatter = command_instance.chatter.clone();
         let label_color = if chatter.is_subscriber {
             chatter.get_color()
         } else {
@@ -173,6 +179,7 @@ impl GameCommandHandler for SpawnEntityCommandHandler {
         let draw_system = GameObjectDrawSystem::new(sprite, label, scale);
         let size = draw_system.get_size().unwrap_or((50.0, 50.0));
         let physics_system = (self.physics_system)();
+        let drop_zone_location = gameworld.get_column_coordinates_by_index(command_instance.id);
         let game_object = GameObject::new(
             drop_zone_location.x - size.0 / 2.0,
             drop_zone_location.y - size.1 / 2.0,
@@ -185,10 +192,13 @@ impl GameCommandHandler for SpawnEntityCommandHandler {
             self.game_object_type.clone(),
             (self.life_system)(),
         );
-        Ok(game_object)
+        gameworld.add_game_object(game_object);
+        Ok(())
     }
 }
 
+//Placeholder for possible player effect commands like slowdown, input reverse
+//high gravity and so on.
 #[derive(Clone)]
 pub struct PlayerEffectCommandHandler {
     pub effect_name: &'static str,
@@ -228,5 +238,12 @@ impl GameCommandHandlers {
         physics_system: || Some(Box::new(HeartPhysics::new())),
         life_system: || Some(Box::new(HeartLifeSystem::new())),
     };
-    const RANDOM: &'static dyn GameCommandHandler = &RandomCommandHandler {};
+    const RANDOM: &'static dyn GameCommandHandler = &RandomCommandHandler {
+        choices: &[
+            GameCommandHandlers::FIRE,
+            GameCommandHandlers::HEART,
+            GameCommandHandlers::SNAKE,
+            GameCommandHandlers::SWORD,
+        ],
+    };
 }

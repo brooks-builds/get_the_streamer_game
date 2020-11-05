@@ -164,10 +164,7 @@ impl GameState {
         if let Some(command) = command {
             let chatter = command.chatter.clone();
             self.object_sound.play().unwrap();
-            self.gameworld.add_game_object(command.handle(
-                self.gameworld.get_column_coordinates_by_index(command.id),
-                context,
-            )?);
+            let _ = command.handle(context, &mut self.gameworld);
             let score = self.scores.entry(chatter.name).or_insert(0);
             *score += 1;
         }
