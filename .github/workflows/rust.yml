@@ -14,8 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: display secret
-        run: echo ${{ secrets.TEST }}
+      - shell: bash
+        env:
+          TEST: ${{ secrets.TEST }}
+        run: echo "$TEST"
   check:
     runs-on: ubuntu-latest
 
