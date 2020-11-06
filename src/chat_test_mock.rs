@@ -15,9 +15,6 @@ pub fn run(
     max_command_interval_ms: u64,
 ) {
     thread::spawn(move || {
-        //The commands we'll be selecting from and the number of times each will be in the selection pool
-        //let command_occurences = [("fire", 1), ("sword", 1), ("snake", 1), ("heart", 1)];
-
         //Generate command pool
         let command_pool = command_occurences
             .iter()
@@ -40,6 +37,9 @@ pub fn run(
                 command = command_pool[rng.gen_range(0, command_pool.len())],
                 column = rng.gen_range(0, 10)
             );
+
+            //print!("Test Bot sending command: {}", input);
+
             let (_pos, msg_a) = twitch_chat_wrapper::twitchchat::irc::parse_one(&input).unwrap();
 
             let test_msg: Privmsg = Privmsg::from_irc(msg_a).unwrap();
