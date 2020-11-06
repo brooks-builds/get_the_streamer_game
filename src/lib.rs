@@ -62,9 +62,9 @@ pub struct RunConfig {
 impl Default for RunConfig {
     fn default() -> Self {
         RunConfig {
-            test_bot_chatters:0,
+            test_bot_chatters: 0,
             test_command_occurences: &[],
-            attach_to_twitch_channel: true
+            attach_to_twitch_channel: true,
         }
         // RunConfig{
         //     test_bot_chatters: 5,
