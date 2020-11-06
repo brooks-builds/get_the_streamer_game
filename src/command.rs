@@ -120,12 +120,19 @@ pub trait GameCommandHandler {
     }
 }
 
+//struct to hold a command handler and an incidence count for use in
+//the RandomCommandHandler
+struct CommandCount {
+    command_handler: &'static dyn GameCommandHandler,
+    count: u8,
+}
+
 //RandomCommandHandler fires a random event from the given set of commands.
 //(The set is manually defined to avoid inadvertantly including undesirable
 //future commands)
 #[derive(Clone)]
 pub struct RandomCommandHandler {
-    choices: &'static [&'static dyn GameCommandHandler],
+    choices: &'static [CommandCount],
 }
 
 impl GameCommandHandler for RandomCommandHandler {
@@ -135,13 +142,30 @@ impl GameCommandHandler for RandomCommandHandler {
         gameworld: &mut GameWorld,
         command_instance: &CommandInstance,
     ) -> GameResult {
-        let chatter = command_instance.chatter.clone();
-        let rng = &mut thread_rng();
-        let chosen = self.choices.choose(rng).unwrap();
+        //Calc total size of selection pool
+        //This could be run once and cached but maybe not worth it.
+        let total_choices: i16 = self.choices.iter().fold(0, |acc, e| acc + e.count as i16);
+
+        //pick random pool index
+        let mut pool_index: i16 = thread_rng().gen_range(0, total_choices);
+
+        //let's avoid an Option by starting with the first command
+        let mut chosen_handler = self.choices[0].command_handler;
+
+        //find command at chosen pool position
+        for choice in self.choices {
+            pool_index -= choice.count as i16;
+            if pool_index < 0 {
+                chosen_handler = choice.command_handler;
+                break;
+            }
+        }
+
+        //Create a new command instance for the random selection and execute it
         let gc = CommandInstance {
-            command_handler: *chosen,
-            id: rng.gen_range(0, crate::DROP_ZONE_COUNT),
-            chatter,
+            command_handler: chosen_handler,
+            id: command_instance.id,
+            chatter: command_instance.chatter.clone(),
         };
         gc.handle(context, gameworld)
     }
@@ -240,10 +264,22 @@ impl GameCommandHandlers {
     };
     const RANDOM: &'static dyn GameCommandHandler = &RandomCommandHandler {
         choices: &[
-            GameCommandHandlers::FIRE,
-            GameCommandHandlers::HEART,
-            GameCommandHandlers::SNAKE,
-            GameCommandHandlers::SWORD,
+            CommandCount {
+                command_handler: GameCommandHandlers::HEART,
+                count: 1,
+            },
+            CommandCount {
+                command_handler: GameCommandHandlers::FIRE,
+                count: 3,
+            },
+            CommandCount {
+                command_handler: GameCommandHandlers::SNAKE,
+                count: 3,
+            },
+            CommandCount {
+                command_handler: GameCommandHandlers::SWORD,
+                count: 3,
+            },
         ],
     };
 }
