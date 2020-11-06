@@ -168,12 +168,16 @@ impl CommandType {
 
 impl Distribution<CommandType> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> CommandType {
-        match rng.gen_range(0, 4) {
-            0 => CommandType::Fire,
-            1 => CommandType::Sword,
-            2 => CommandType::Snake,
-            3 => CommandType::Heart,
-            _ => unreachable!(),
+        let random: f32 = rng.gen();
+
+        if random < 0.1 {
+            CommandType::Heart
+        } else if random >= 0.1 && random < 0.4 {
+            CommandType::Fire
+        } else if random >= 0.4 && random < 0.7 {
+            CommandType::Sword
+        } else {
+            CommandType::Snake
         }
     }
 }
