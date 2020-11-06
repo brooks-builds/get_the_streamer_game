@@ -10,14 +10,6 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  testsecret:
-    runs-on: ubuntu-latest
-
-    steps:
-      - shell: bash
-        env:
-          TEST: ${{ secrets.TEST }}
-        run: echo "$TEST"
   check:
     runs-on: ubuntu-latest
 
@@ -42,30 +34,3 @@ jobs:
         run: cargo clippy -- -D clippy::all
       - name: Build
         run: cargo build --release
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Install Packages
-        run: sudo apt install libasound2-dev libudev-dev pkg-config
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - name: Build
-        run: cargo build --release
-      - name: Create packaging directories
-        run: mkdir get_the_streamer_game && mkdir get_the_streamer_game/resources
-      - name: copy in assets for packaging
-        run: cp assets/* get_the_streamer_game/resources
-      - name: copy in binary for packaging
-        run: cp target/release/get_the_streamer_game get_the_streamer_game/
-      - name: Bundle
-        run: zip -r get_the_streamer_game get_the_streamer_game.zip
