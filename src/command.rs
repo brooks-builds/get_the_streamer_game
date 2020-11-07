@@ -174,7 +174,7 @@ impl RandomCommandHandler {
         let mut pool_size = 0;
         let mut i = 0;
         while i < choices.len() {
-            pool_size = choices[i].count as i16;
+            pool_size += choices[i].count as i16;
             i += 1;
         }
         RandomCommandHandler { pool_size, choices }
