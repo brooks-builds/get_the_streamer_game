@@ -122,7 +122,7 @@ pub trait GameCommandHandler {
 
 //struct to hold a command handler and an incidence count for use in
 //the RandomCommandHandler
-struct CommandCount {
+pub struct CommandCount {
     command_handler: &'static dyn GameCommandHandler,
     count: u8,
 }
@@ -132,7 +132,53 @@ struct CommandCount {
 //future commands)
 #[derive(Clone)]
 pub struct RandomCommandHandler {
+    pool_size: i16,
     choices: &'static [CommandCount],
+}
+
+impl RandomCommandHandler {
+    /// Returns a command handler that will randomly call one of the
+    /// commands provided according to the proportions in the counts.
+    ///
+    /// # Arguments
+    ///
+    /// * `choices` - An array of CommandCount instances giving command
+    /// handlers and the number to be in the selection pool.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// //This will define a command handler with a 1 in 3 chance of
+    /// //choosing each of the three options:
+    /// let rch = RandomCommandHandler::new(
+    ///     &[{GameCommandHandlers::HEART, 1},
+    ///     {GameCommandHandlers::SNAKE, 1},
+    ///     {GameCommandHandlers::SWORD, 1}]);
+    ///
+    /// //This will define a command handler with a 1 in 5 chance of choosing
+    /// //HEART and a 2 in 5 chance of choosing each of the other commands.
+    /// let rch = RandomCommandHandler::new(
+    ///     &[{GameCommandHandlers::HEART, 1},
+    ///     {GameCommandHandlers::SNAKE, 2},
+    ///     {GameCommandHandlers::SWORD, 2}]);
+    /// ```
+    const fn new(choices: &'static [CommandCount]) -> RandomCommandHandler {
+        //For anyone happening on this and thinking "Why is this code looping
+        //over an array by index and not even using a for loop?" the answer
+        //is to the left of the function declaration above.
+        //Right now Rust does not allow iter folds or for loops in const
+        //functions and this needs to be a const function as the command
+        //handlers are initialised as const.
+        //@ootsby 2020-11-07
+
+        let mut pool_size = 0;
+        let mut i = 0;
+        while i < choices.len() {
+            pool_size = choices[i].count as i16;
+            i += 1;
+        }
+        RandomCommandHandler { pool_size, choices }
+    }
 }
 
 impl GameCommandHandler for RandomCommandHandler {
@@ -142,12 +188,8 @@ impl GameCommandHandler for RandomCommandHandler {
         gameworld: &mut GameWorld,
         command_instance: &CommandInstance,
     ) -> GameResult {
-        //Calc total size of selection pool
-        //This could be run once and cached but maybe not worth it.
-        let total_choices: i16 = self.choices.iter().fold(0, |acc, e| acc + e.count as i16);
-
         //pick random pool index
-        let mut pool_index: i16 = thread_rng().gen_range(0, total_choices);
+        let mut pool_index: i16 = thread_rng().gen_range(0, self.pool_size);
 
         //let's avoid an Option by starting with the first command
         let mut chosen_handler = self.choices[0].command_handler;
@@ -162,12 +204,12 @@ impl GameCommandHandler for RandomCommandHandler {
         }
 
         //Create a new command instance for the random selection and execute it
-        let gc = CommandInstance {
+        let ci = CommandInstance {
             command_handler: chosen_handler,
             id: command_instance.id,
             chatter: command_instance.chatter.clone(),
         };
-        gc.handle(context, gameworld)
+        ci.handle(context, gameworld)
     }
 }
 
@@ -262,24 +304,22 @@ impl GameCommandHandlers {
         physics_system: || Some(Box::new(HeartPhysics::new())),
         life_system: || Some(Box::new(HeartLifeSystem::new())),
     };
-    const RANDOM: &'static dyn GameCommandHandler = &RandomCommandHandler {
-        choices: &[
-            CommandCount {
-                command_handler: GameCommandHandlers::HEART,
-                count: 1,
-            },
-            CommandCount {
-                command_handler: GameCommandHandlers::FIRE,
-                count: 3,
-            },
-            CommandCount {
-                command_handler: GameCommandHandlers::SNAKE,
-                count: 3,
-            },
-            CommandCount {
-                command_handler: GameCommandHandlers::SWORD,
-                count: 3,
-            },
-        ],
-    };
+    const RANDOM: &'static dyn GameCommandHandler = &RandomCommandHandler::new(&[
+        CommandCount {
+            command_handler: GameCommandHandlers::HEART,
+            count: 1,
+        },
+        CommandCount {
+            command_handler: GameCommandHandlers::FIRE,
+            count: 3,
+        },
+        CommandCount {
+            command_handler: GameCommandHandlers::SNAKE,
+            count: 3,
+        },
+        CommandCount {
+            command_handler: GameCommandHandlers::SWORD,
+            count: 3,
+        },
+    ]);
 }
