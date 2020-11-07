@@ -1,381 +1,104 @@
+mod chat_test_mock;
 mod chatter;
-pub mod command;
+mod command;
 mod credits;
 mod draw_system;
+mod game_assets;
 mod game_object;
 mod game_object_type;
-mod interface;
+mod game_world;
+mod gamestate;
 mod life_system;
 mod physics;
 mod running_state;
-mod splash;
 mod sprites;
+mod ui;
 mod utilities;
 
 use chatter::Chatter;
-use command::Command;
-use credits::Credits;
-use draw_system::{DrawSystem, PlayerDrawSystem, TimerDrawSystem};
+use draw_system::DrawSystem;
+use game_assets::GameAssets;
 use game_object::GameObject;
 use game_object_type::GameObjectType;
-use ggez::audio;
-use ggez::audio::SoundSource;
-use ggez::event::EventHandler;
-use ggez::graphics::BLACK;
-use ggez::{graphics, timer, Context, GameResult};
-use interface::Interface;
-use life_system::{LifeSystem, PlayerLifeSystem};
-use physics::{PhysicsSystem, PlayerPhysics, TimerPhysicsSystem};
-use running_state::RunningState;
-use splash::Splash;
+use gamestate::GameState;
+use ggez::conf::WindowMode;
+use ggez::conf::WindowSetup;
+use ggez::graphics::Image;
+use ggez::{event, Context, ContextBuilder};
+use std::sync::Mutex;
+
+use lazy_static::lazy_static;
+use life_system::LifeSystem;
+use physics::PhysicsSystem;
 use sprites::Sprite;
-use std::{collections::HashMap, time::Duration};
-use std::{
-    sync::mpsc::{channel, Receiver, Sender},
-    time::Instant,
-};
-use twitch_chat_wrapper::chat_message::ChatMessage;
 
-pub const DROP_ZONE_COUNT: u8 = 10;
-const GAME_TIME: Duration = Duration::from_secs(120);
-pub const SPLASH_DURATION: Duration = Duration::from_secs(15);
-const LIVES: u8 = 3;
-const FRAMERATE_TARGET: u32 = 60;
-const SCORES_FILE_NAME: &str = "/high_scores";
+const GLOBAL_VOLUME: f32 = 1.0;
+const DROP_ZONE_COUNT: u8 = 10;
 
-pub struct GameState {
-    send_to_chat: Sender<String>,
-    receive_from_chat: Receiver<ChatMessage>,
-    screen_size: (f32, f32),
-    interface: Interface,
-    game_objects: Vec<GameObject>,
-    player_hit_object_event: Receiver<Chatter>,
-    running_state: RunningState,
-    credits: Option<Credits>,
-    splash: Splash,
-    game_start_time: Instant,
-    object_sound: audio::Source,
-    scores: HashMap<String, u128>,
+//@ootsby - 2020-11-03
+//There's no strong opinion behind how this asset manager is declared or the public function
+//interface. This is pretty much just the first way I found to do it that wasn't hideous.
+//The main objective is just to start gathering the responsibility in one place to pave the way
+//for pre-processing of assets, using spritesheets and so on.
+
+lazy_static! {
+    static ref GAME_ASSETS: Mutex<GameAssets> = Mutex::new(GameAssets::new());
 }
 
-impl GameState {
-    pub fn new(
-        send_to_chat: Sender<String>,
-        receive_from_chat: Receiver<ChatMessage>,
-        screen_size: (f32, f32),
-        context: &mut Context,
-    ) -> GameResult<GameState> {
-        let game_started_message = format!("In {} seconds the Get the Streamer game will begin, you can play through chat with the commands on the right side of the game.", SPLASH_DURATION.as_secs());
-        send_to_chat.send(game_started_message).unwrap();
-        let mut interface = Interface::new(context, screen_size, LIVES)?;
+pub fn get_image_from_assets(context: &mut Context, path: String) -> Image {
+    GAME_ASSETS.lock().unwrap().get_image(context, path)
+}
 
-        // create timer block
-        let timer_game_object = Self::create_timer(
-            screen_size,
-            context,
-            interface.width,
-            SPLASH_DURATION,
-            (0.0, 1.0, 0.0),
-        )?;
-        interface.add_game_object(timer_game_object);
+const WINDOW_SIZE: (f32, f32) = (1920.0, 1080.0);
 
-        // create player
-        let player_scale = 4.0;
-        let player_forward_sprite = Sprite::new(context, "/player_forward.png", 8, 1)?;
-        let player_left_sprite = Sprite::new(context, "/player_left.png", 8, 1)?;
-        let player_draw_system =
-            PlayerDrawSystem::new(player_left_sprite, player_forward_sprite, player_scale);
-        let player_size = player_draw_system.get_size().unwrap_or((50.0, 50.0));
-        let (send_player_hit_object_event, receive_player_hit_object_event) = channel();
-        let player_physics_system = PlayerPhysics::new(context, send_player_hit_object_event);
-        let player = GameObject::new(
-            250.0,
-            250.0,
-            Some(Box::new(player_draw_system)),
-            player_size.0,
-            player_size.1,
-            Some(Box::new(player_physics_system)),
-            true,
-            None,
-            GameObjectType::Player,
-            Some(Box::new(PlayerLifeSystem::new())),
-        );
+//This config struct is a stepping stone to more a complete settings system and/or a
+//general purpose config_vars key-value store.
+pub struct RunConfig {
+    pub test_bot_chatters: u32,
+    pub test_command_occurences: &'static [(&'static str, u32)],
+    pub attach_to_twitch_channel: bool,
+}
 
-        let game_objects = vec![player];
-        let splash = Splash::new(
-            (screen_size.0 - interface.width, screen_size.1),
-            context,
-            SPLASH_DURATION,
-        );
-        let game_start_time = Instant::now();
-
-        Ok(GameState {
-            send_to_chat,
-            receive_from_chat,
-            screen_size,
-            interface,
-            game_objects,
-            player_hit_object_event: receive_player_hit_object_event,
-            running_state: RunningState::StartingSoon,
-            credits: None,
-            splash,
-            game_start_time,
-            object_sound: audio::Source::new(context, "/threeTone1.ogg").unwrap(),
-            scores: HashMap::new(),
-        })
-    }
-
-    fn handle_command(
-        &mut self,
-        command: Option<Command>,
-        context: &mut Context,
-    ) -> GameResult<()> {
-        if let Some(command) = command {
-            let chatter = command.chatter.clone();
-            self.object_sound.play().unwrap();
-            self.game_objects.push(command.handle(
-                self.interface.get_column_coordinates_by_index(command.id),
-                context,
-            )?);
-            let score = self.scores.entry(chatter.name).or_insert(0);
-            *score += 1;
+impl Default for RunConfig {
+    fn default() -> Self {
+        RunConfig {
+            test_bot_chatters: 0,
+            test_command_occurences: &[],
+            attach_to_twitch_channel: true,
         }
-        Ok(())
-    }
-
-    fn get_player(&self) -> Option<&GameObject> {
-        self.game_objects
-            .iter()
-            .find(|game_object| game_object.my_type == GameObjectType::Player)
-    }
-
-    fn create_timer(
-        screen_size: (f32, f32),
-        context: &mut Context,
-        interface_width: f32,
-        duration: Duration,
-        color: (f32, f32, f32),
-    ) -> GameResult<GameObject> {
-        let timer_draw_system = TimerDrawSystem::new(screen_size, context, color)?;
-        let timer_size = timer_draw_system.get_size().unwrap_or((5.0, screen_size.1));
-        let timer_physics_system =
-            TimerPhysicsSystem::new(timer_size.1, duration, FRAMERATE_TARGET as f32);
-        let timer_game_object = GameObject::new(
-            screen_size.0 - interface_width,
-            0.0,
-            Some(Box::new(timer_draw_system)),
-            timer_size.0,
-            timer_size.1,
-            Some(Box::new(timer_physics_system)),
-            false,
-            None,
-            GameObjectType::Interface,
-            None,
-        );
-        Ok(timer_game_object)
-    }
-
-    fn update_scores(&self, high_scores: &mut HashMap<String, u128>) {
-        for (username, score) in &self.scores {
-            let high_score = high_scores.entry(username.to_owned()).or_insert(0);
-            *high_score += *score;
-        }
-    }
-
-    fn send_game_started_message(&self) {
-        let message = format!(
-            "You have {} seconds to send your commands to Get the Streamer!",
-            GAME_TIME.as_secs()
-        );
-        if let Err(error) = self.send_to_chat.send(message) {
-            eprintln!("error sending game started message to chat: {}", error);
-        }
-    }
-
-    fn send_game_ended_message(&self, winner: RunningState) {
-        let (highest_scorer, score) = self
-            .get_highest_scorer()
-            .unwrap_or_else(|| ("nobody".to_owned(), 0));
-
-        let message = match winner {
-            RunningState::ChatWon => format!(
-                "You all won, highest scorer was {} with {} points!",
-                highest_scorer, score
-            ),
-            _ => format!(
-                "The Streamer won the game despite the best efforts of {} who got {} points!",
-                highest_scorer, score
-            ),
-        };
-
-        if let Err(error) = self.send_to_chat.send(message) {
-            eprintln!("error sending game ended message to chat: {}", error);
-        }
-    }
-
-    fn end_game(&mut self, new_running_state: RunningState) {
-        self.send_game_ended_message(new_running_state);
-        self.running_state = new_running_state;
-    }
-
-    fn get_highest_scorer(&self) -> Option<(String, u128)> {
-        if let Some(scorer) = self.scores.iter().max_by(|a, b| a.1.cmp(b.1)) {
-            Some((scorer.0.to_owned(), *scorer.1))
-        } else {
-            None
-        }
+        // RunConfig{
+        //     test_bot_chatters: 5,
+        //     test_command_occurences: &[
+        //         ("fire", 1),
+        //         ("sword", 1),
+        //         ("snake", 1),
+        //         ("heart", 1),
+        //         ("rng", 1),
+        //         ("rand", 1),
+        //         ("random", 1),
+        //     ],
+        //     attach_to_twitch_channel: false,
+        // }
     }
 }
-impl EventHandler for GameState {
-    fn update(&mut self, context: &mut Context) -> GameResult {
-        if let Ok(chat_message) = self.receive_from_chat.try_recv() {
-            if matches!(self.running_state, RunningState::Playing) {
-                let chatter_name = if let Some(display_name) = chat_message.display_name {
-                    display_name
-                } else {
-                    chat_message.name.clone()
-                };
-                match Command::new(
-                    &chat_message.message,
-                    Chatter::new(
-                        chatter_name,
-                        chat_message.color_rgb,
-                        chat_message.subscriber,
-                    ),
-                ) {
-                    Err(error) => self.send_to_chat.send(error.to_owned()).unwrap(),
-                    Ok(command) => self.handle_command(command, context)?,
-                }
-            }
-        }
 
-        while timer::check_update_time(context, FRAMERATE_TARGET) {
-            match self.running_state {
-                RunningState::StartingSoon => {
-                    if let Err(error) = self.interface.update(context, LIVES) {
-                        eprintln!("Error updating game objects in interface: {}", error);
-                    }
-                    if self.splash.is_done() {
-                        self.send_game_started_message();
-                        self.running_state = RunningState::Playing;
-                        let timer = Self::create_timer(
-                            self.screen_size,
-                            context,
-                            self.interface.width,
-                            GAME_TIME,
-                            (1.0, 0.0, 0.0),
-                        )?;
-                        self.interface.add_game_object(timer);
-                        self.game_start_time = Instant::now();
-                    }
-                }
-                RunningState::Playing => {
-                    // get the player lives left
-                    let lives_left = if let Some(player) = self.get_player() {
-                        player.get_lives_left().unwrap_or(3)
-                    } else {
-                        0
-                    };
+pub fn run_game(run_config: Option<RunConfig>) {
+    let (context, event_loop) = &mut match ContextBuilder::new("Get the Streamer", "Brooks Builds")
+        .window_setup(WindowSetup::default().title("Get the Streamer"))
+        .window_mode(
+            WindowMode::default()
+                .dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1)
+                .resizable(true),
+        )
+        .build()
+    {
+        Ok((context, event_loop)) => (context, event_loop),
+        Err(error) => panic!(error),
+    };
 
-                    if let Err(error) = self.interface.update(context, lives_left) {
-                        eprintln!("Error updating game objects in interface: {}", error);
-                    }
-
-                    let game_time_left =
-                        GAME_TIME.as_secs() - self.game_start_time.elapsed().as_secs();
-                    if game_time_left == 0 {
-                        self.end_game(RunningState::PlayerWon);
-                    }
-
-                    let arena_size = (
-                        self.screen_size.0 - self.interface.width,
-                        self.screen_size.1,
-                    );
-
-                    let collidable_game_objects: Vec<GameObject> = self
-                        .game_objects
-                        .clone()
-                        .into_iter()
-                        .filter(|game_object| game_object.collidable)
-                        .collect();
-
-                    self.game_objects.iter_mut().for_each(|game_object| {
-                        if let Err(error) = game_object.update(
-                            timer::time_since_start(context),
-                            arena_size,
-                            context,
-                            &collidable_game_objects,
-                        ) {
-                            eprintln!("error running update: {}", error)
-                        }
-                    });
-
-                    self.game_objects
-                        .retain(|game_object| game_object.is_alive());
-
-                    if let Ok(chatter) = self.player_hit_object_event.try_recv() {
-                        let message_to_chat = format!("Hit! {} gets 10 points", &chatter.name);
-                        self.send_to_chat.send(message_to_chat).unwrap();
-                        let score = self.scores.entry(chatter.name).or_insert(0);
-                        *score += 10;
-                    }
-
-                    if self
-                        .game_objects
-                        .iter()
-                        .find(|game_object| game_object.my_type == GameObjectType::Player)
-                        .is_none()
-                    {
-                        self.end_game(RunningState::ChatWon);
-                    }
-                }
-                RunningState::ChatWon | RunningState::PlayerWon => {
-                    if let Some(credits) = &mut self.credits {
-                        if !credits.update() {
-                            ggez::event::quit(context);
-                        }
-                    } else {
-                        let mut high_scores = utilities::load_scores(SCORES_FILE_NAME, context);
-                        self.update_scores(&mut high_scores);
-                        if let Err(error) =
-                            utilities::save_scores(context, SCORES_FILE_NAME, &high_scores)
-                        {
-                            eprintln!("Error saving high scores to disk: {}", error);
-                        }
-                        self.credits = Some(Credits::new(
-                            self.running_state,
-                            context,
-                            self.screen_size,
-                            &high_scores,
-                            &self.scores,
-                        )?);
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-
-    fn draw(&mut self, context: &mut Context) -> GameResult {
-        graphics::clear(context, BLACK);
-
-        self.interface
-            .draw(context, self.screen_size, &self.running_state)?;
-
-        match self.running_state {
-            RunningState::StartingSoon => self.splash.draw(context)?,
-            RunningState::Playing => {
-                for game_object in self.game_objects.iter() {
-                    game_object.draw(context)?;
-                }
-            }
-            RunningState::PlayerWon | RunningState::ChatWon => {
-                if let Some(credits) = &self.credits {
-                    credits.draw(context)?;
-                }
-            }
-        }
-
-        graphics::present(context)
-    }
+    let game_state = &mut GameState::new(run_config, WINDOW_SIZE, context).unwrap();
+    match event::run(context, event_loop, game_state) {
+        Ok(_) => println!("Thanks for playing!"),
+        Err(error) => eprintln!("Error occurred: {}", error),
+    };
 }

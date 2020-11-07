@@ -11,6 +11,7 @@ ggez = "0.5.1"
 twitch_chat_wrapper = "0.2.0"
 eyre = "0.6.0"
 rand = "0.7.3"
+lazy_static = "1.4.0"
 
 [build-dependencies]
 anyhow = "1.0.32"

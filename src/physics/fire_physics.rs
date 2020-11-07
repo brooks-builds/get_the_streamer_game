@@ -6,7 +6,7 @@ use ggez::graphics::Rect;
 use ggez::nalgebra::Point2;
 use ggez::Context;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FirePhysics {
     velocity: Point2<f32>,
     affected_by_gravity: bool,

@@ -2,6 +2,5 @@
 pub enum GameObjectType {
     Player,
     Enemy,
-    Interface,
     Heart,
 }

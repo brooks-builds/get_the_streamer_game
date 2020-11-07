@@ -4,7 +4,7 @@ use super::PhysicsSystem;
 use eyre::Result;
 use ggez::{graphics::Rect, Context};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HeartPhysics {
     velocity_y: f32,
 }

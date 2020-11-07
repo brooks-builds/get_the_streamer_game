@@ -3,7 +3,6 @@ mod heart_physics;
 mod player_physics;
 mod snake_physics;
 mod sword_physics;
-mod timer_physics;
 
 use crate::life_system::LifeSystem;
 
@@ -16,7 +15,6 @@ pub use heart_physics::HeartPhysics;
 pub use player_physics::PlayerPhysics;
 pub use snake_physics::SnakePhysics;
 pub use sword_physics::SwordPhysics;
-pub use timer_physics::TimerPhysicsSystem;
 
 pub trait PhysicsSystem
 where
